@@ -96,6 +96,7 @@ class Control(models.Model):
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=500)
 
+
     class Meta:
         verbose_name="Control"
         verbose_name_plural="Controls"
@@ -116,3 +117,52 @@ class Threat_has_control(models.Model):
     control = models.ForeignKey(Control, on_delete=models.CASCADE)
 
 # AL MODELLO DEI DATI MANCA SOLO LA PARTE RELATIVA AI THREAT AGENTS
+
+class Function(models.Model):
+    name= models.CharField(max_length=100)
+    description=models.CharField(max_length=500)
+
+    class Meta:
+        verbose_name="Function"
+        verbose_name_plural="Functions"
+
+    def __str__(self):
+        return self.name
+
+class Category(models.Model):
+    name=models.CharField(max_length=100)
+    description=models.CharField(max_length=500)
+    function=models.ForeignKey(Function, on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name="Category"
+        verbose_name_plural="Categories"
+
+    def __str__(self):
+        return self.name
+
+class Subcategory(models.Model):
+    name= models.CharField(max_length=100)
+    description= models.CharField(max_length=500)
+    category=models.ForeignKey(Category, on_delete=models.CASCADE, default=1)
+
+    class Meta:
+        verbose_name= "Subcategory"
+        verbose_name_plural="Subcategories"
+
+    def __str__(self):
+        return self.name
+
+
+class Threat_has_subcategory(models.Model):
+    threat=models.ForeignKey(Threat,on_delete=models.CASCADE)
+    subcategory=models.ForeignKey(Subcategory,on_delete=models.CASCADE)
+
+class Subcategory_has_control(models.Model):
+    subcategory=models.ForeignKey(Subcategory, on_delete=models.CASCADE)
+    control=models.ForeignKey(Control, on_delete=models.CASCADE)
+
+class Threat_has_threatdetails(models.Model):
+    threat=models.ForeignKey(Threat, related_name= 'threat_father', on_delete=models.CASCADE)
+    threatdetails=models.ForeignKey(Threat,related_name='threat_child', on_delete=models.CASCADE)
+
