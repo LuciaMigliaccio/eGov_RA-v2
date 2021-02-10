@@ -1,5 +1,7 @@
 from django.db import models
 from django.core.validators import FileExtensionValidator
+from django.utils.translation import gettext_lazy as _
+from enum import Enum
 
 # Create your models here.
 
@@ -92,10 +94,22 @@ class Attribute(models.Model):
     def __str__(self):
         return self.attribute_name
 
+class Family(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.CharField(max_length=500)
+    source = models.CharField(max_length=500)
+
+    class Meta:
+        verbose_name = "Subcategory"
+        verbose_name_plural = "Subcategories"
+
+    def __str__(self):
+        return self.name
+
 class Control(models.Model):
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=500)
-
+    family= models.ForeignKey(Family, on_delete=models.CASCADE, default='1')
 
     class Meta:
         verbose_name="Control"
@@ -118,21 +132,34 @@ class Threat_has_control(models.Model):
 
 # AL MODELLO DEI DATI MANCA SOLO LA PARTE RELATIVA AI THREAT AGENTS
 
-class Function(models.Model):
-    name= models.CharField(max_length=100)
-    description=models.CharField(max_length=500)
-
-    class Meta:
-        verbose_name="Function"
-        verbose_name_plural="Functions"
-
-    def __str__(self):
-        return self.name
-
 class Category(models.Model):
+
+    class FunctionStatus(Enum):
+        IDENTIFY = 'ID'
+        PROTECT = 'PR'
+        DETECT = 'DE'
+        RESPOND = 'RS'
+        RECOVER = 'RC'
+
+        def __str__(self):
+            return self.value
+
+        @classmethod
+        def choices(cls):
+            return (
+                (str(cls.IDENTIFY), _('Identify')),
+                (str(cls.PROTECT), _('Protect')),
+                (str(cls.DETECT), _('Detect')),
+                (str(cls.RESPOND), _('Respond')),
+                (str(cls.RECOVER), _('Recover')),
+            )
+
+
     name=models.CharField(max_length=100)
     description=models.CharField(max_length=500)
-    function=models.ForeignKey(Function, on_delete=models.CASCADE)
+    function = models.CharField(_('function'), default = FunctionStatus.IDENTIFY, choices= FunctionStatus.choices(), max_length= 250)
+    source=models.CharField(max_length=500, default = 'Cybersecurity framework nazionale')
+
 
     class Meta:
         verbose_name="Category"
@@ -153,12 +180,29 @@ class Subcategory(models.Model):
     def __str__(self):
         return self.name
 
+class Context(models.Model):
+    name = models.CharField(max_length=100)
+    method = models.CharField(max_length=500)
+    maturity_levels=models.CharField(max_length=500)
 
-class Threat_has_subcategory(models.Model):
+    class Meta:
+        verbose_name = "Subcategory"
+        verbose_name_plural = "Subcategories"
+
+    def __str__(self):
+        return self.name
+
+class Contextualization(models.Model):
+   context=models.ForeignKey(Context, on_delete=models.CASCADE)
+   subcategory=models.ForeignKey(Subcategory, on_delete=models.CASCADE)
+   priority= models.CharField(max_length=100)
+   maturity_level= models.CharField(max_length=1000)
+
+class is_a_requirement_for_mitigation(models.Model):
     threat=models.ForeignKey(Threat,on_delete=models.CASCADE)
     subcategory=models.ForeignKey(Subcategory,on_delete=models.CASCADE)
 
-class Subcategory_has_control(models.Model):
+class Subcategory_is_implemented_through_control(models.Model):
     subcategory=models.ForeignKey(Subcategory, on_delete=models.CASCADE)
     control=models.ForeignKey(Control, on_delete=models.CASCADE)
 
@@ -166,3 +210,12 @@ class Threat_has_threatdetails(models.Model):
     threat=models.ForeignKey(Threat, related_name= 'threat_father', on_delete=models.CASCADE)
     threatdetails=models.ForeignKey(Threat,related_name='threat_child', on_delete=models.CASCADE)
 
+class Control_has_subcontrol(models.Model):
+    control=models.ForeignKey(Control, related_name='control_father', on_delete=models.CASCADE)
+    subcontrol=models.ForeignKey(Control,  related_name='control_child', on_delete=models.CASCADE)
+
+class Control_has_relatedcontrol(models.Model):
+    control= models.ForeignKey(Control, related_name='control_relating', on_delete=models.CASCADE)
+    relatedcontrol=models.ForeignKey(Control, related_name='control_related', on_delete= models.CASCADE)
+    family= models.ForeignKey(Family, related_name='family_relating', on_delete=models.CASCADE)
+    relatedfamily = models.ForeignKey(Family, related_name='family_related', on_delete=models.CASCADE)
