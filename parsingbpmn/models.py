@@ -110,6 +110,7 @@ class Control(models.Model):
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=500)
     family= models.ForeignKey(Family, on_delete=models.CASCADE, default='1')
+    maturity_level = models.CharField(max_length=100, default = "minimo")
 
     class Meta:
         verbose_name="Control"
@@ -180,23 +181,24 @@ class Subcategory(models.Model):
     def __str__(self):
         return self.name
 
-class Context(models.Model):
+class Context_and_profile(models.Model):
     name = models.CharField(max_length=100)
     method = models.CharField(max_length=500)
-    maturity_levels=models.CharField(max_length=500)
+    type = models.CharField(max_length=100, default = 'standard')
+
 
     class Meta:
-        verbose_name = "Subcategory"
-        verbose_name_plural = "Subcategories"
+        verbose_name = "Context_and_profile"
+        verbose_name_plural = "Contexts_and_profiles"
 
     def __str__(self):
         return self.name
 
-class Contextualization(models.Model):
-   context=models.ForeignKey(Context, on_delete=models.CASCADE)
+class Contextualization_and_profile(models.Model):
+   context_and_profile=models.ForeignKey(Context_and_profile, on_delete=models.CASCADE)
    subcategory=models.ForeignKey(Subcategory, on_delete=models.CASCADE)
    priority= models.CharField(max_length=100)
-   maturity_level= models.CharField(max_length=1000)
+   maturity_level= models.CharField(max_length=3000)
 
 class is_a_requirement_for_mitigation(models.Model):
     threat=models.ForeignKey(Threat,on_delete=models.CASCADE)
@@ -219,3 +221,10 @@ class Control_has_relatedcontrol(models.Model):
     relatedcontrol=models.ForeignKey(Control, related_name='control_related', on_delete= models.CASCADE)
     family= models.ForeignKey(Family, related_name='family_relating', on_delete=models.CASCADE)
     relatedfamily = models.ForeignKey(Family, related_name='family_related', on_delete=models.CASCADE)
+
+
+class Profile_has_context(models.Model):
+    profile = models.ForeignKey(Context_and_profile,related_name='profile_id', on_delete=models.CASCADE, default = 1)
+    context = models.ForeignKey(Context_and_profile,related_name='contextualization', on_delete=models.CASCADE, default = 1)
+    profile_level = models.CharField(max_length= 100)
+
