@@ -8,10 +8,11 @@ from django.shortcuts import render, redirect
 from openpyxl import Workbook
 from openpyxl.styles import Font, Border, Side
 
-from .forms import ProcessForm, SystemForm
+from .forms import ProcessForm, SystemForm, ContextualizationForm, ProfileForm
 from .models import Process, Asset, System, Asset_has_attribute, Attribute, Asset_type, Attribute_value, \
-    Threat_has_attribute, Threat_has_control
+    Threat_has_attribute, Threat_has_control, Context, Profile, Contextualization
 from .bpmn_python_master.bpmn_python import bpmn_diagram_rep as diagram
+from .algoritmo import checkPriority, comparingmaturity, convertFrom, convertTo
 
 # Create your views here.
 
@@ -582,4 +583,140 @@ def bpmn_viewer(request,pk):
     process = Process.objects.get(pk=pk)
     return render(request,'bpmn_viewer.html',{
         'process':process
+    })
+
+def context_management(request):
+
+    if request.method == 'POST':
+        form = ContextualizationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            last_context = Context.objects.latest('id')
+            return redirect('profile_management', last_context.pk)
+    else:
+        form = ContextualizationForm()
+    context = Context.objects.all()
+    return render(request,'context_management.html',{
+        'form':form,'contexts':context
+    })
+
+def profile_management(request,pk):
+
+    if request.method == 'POST':
+        form = ProfileForm(request.POST)
+        if form.is_valid():
+            #form.save()
+            last_profile = Profile.objects.latest('id')
+            return redirect('profile_management', last_profile.pk)
+    else:
+        form = ProfileForm()
+    profiles = Profile.objects.filter(context=Context.objects.get(pk=pk))
+    return render(request,'profile_management.html',{
+        'form':form,'profiles':profiles
+    })
+
+
+def fusion_perform(request):
+    if request.method == 'POST':
+
+        form= ContextualizationForm(request.POST)
+        if form.is_valid():
+
+            contexts = request.POST.getlist('instance')
+            listofcontexts= []
+            newcontext= []
+
+            for contextid in contexts:
+                contextualization = Contextualization.objects.filter(context=Context.objects.get(pk=contextid))
+                makingcontextlist = list(contextualization.values())
+                listofcontexts.append(makingcontextlist)
+
+            context1= listofcontexts[0]
+            context2= listofcontexts[1]
+            #devo prima convertire i dati
+
+            context1= convertTo(context1)
+            context2= convertTo(context2)
+
+            # a questo punto ho sostituito i livelli d ipriorita e i livelli di maturita, ho quindi le corrette liste per poter operare
+            # mo devo effettivamente fare la fusione
+
+            i=0
+            j=0
+
+            while(i< len(context1) and j< len(context2)):
+
+                if context1[i]['subcategory_id'] == context2[j]['subcategory_id']:
+                    #se la subcategory è in entrambe le context
+                    newelement = []
+                    newelement = context1[i]
+
+
+                    if(context1[i]['priority'] > context2[j]['priority']):
+                        newelement['priority'] = context1[i]['priority']
+                    else:
+                        newelement['priority'] = context2[j]['priority']
+
+                    if newelement['priority'] == 3:
+                        checkPriority(context1[i]['maturity_level'], context2[j]['maturity_level'])
+
+                    #confronto maturity level
+                    temp=[]
+                    newelement['maturity_level']= comparingmaturity(context1[i]['maturity_level'], context2[j]['maturity_level'], temp, True)
+
+                    newcontext.append(newelement)
+                    i = i+1
+                    j= j+1
+                elif context1[i]['subcategory_id'] < context2[j]['subcategory_id']:
+
+                    newelement = context1[i]
+                    newcontext.append(newelement)
+                    i=i+1
+                else:
+                    newelement =context2[j]
+                    newcontext.append(newelement)
+                    j=j+1
+
+            while(i < len(context1)):
+                newelement = context1[i]
+                newcontext.append(newelement)
+                i=i+1
+
+            while(j< len(context2)):
+                newelement=context2[j]
+                newcontext.append(newelement)
+                j=j+1
+
+
+            #ho creato la nuova context, mo dovrei riconvertire i dati e caricarli nel db
+            newcontext= convertFrom(newcontext)
+            form.save()
+            last_context = Context.objects.latest('id')
+
+            for item in newcontext:
+                newcontextualization = Contextualization(context_id=last_context.pk, subcategory_id=item['subcategory_id'], priority= item['priority'], maturity_level= item['maturity_level'])
+                newcontextualization.save()
+
+
+        return redirect('profile_management', last_context.pk)
+
+    else:
+        form = ContextualizationForm(request.POST)
+    context = Context.objects.all()
+    return render(request, 'context_management.html', {'context': context, 'form': form})
+
+
+def fusion_profile_perform(request):
+
+    if request.method == 'POST':
+        form = ProfileForm(request.POST)
+        if form.is_valid():
+            #form.save()
+            last_profile = Profile.objects.latest('id')
+            return redirect('profile_management', last_profile.pk)
+    else:
+        form = ProfileForm()
+    profile= Profile.objects.all()
+    return render(request,'profile_management.html',{
+        'form':form,'profiles':profile
     })

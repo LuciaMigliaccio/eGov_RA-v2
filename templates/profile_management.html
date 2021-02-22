@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+
+    <h1>Create profile</h1>
+    <p style="font-family: 'Times New Roman';font-size: medium">
+        This form allows you to create a new profile by uploading an excel file to be analyzed,
+        in case the profile in question is not already among those in the list below.
+    </p>
+    <form method="POST" enctype="multipart/form-data" style="font-family: 'Times New Roman';font-size: larger">
+        {% csrf_token %}
+          {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Create</button>
+      </form>
+    <h1>Profile available</h1>
+    <p style="font-family: 'Times New Roman';font-size: medium">
+        You can select the profile from those already created to continue with the analysis.
+        It is also possible to delete one of the existing profile. Select the profiles you want to combine(your actual profile
+        and the target you want to reach) to perform the fusion
+    </p>
+    <form method="POST" action="{% url 'fusion_profile_perform'%}">
+        {% csrf_token %}
+             <table class="table">
+                <thead>
+                    <tr>
+                        <th>Select</th>
+                        <th>Name</th>
+                        <th>Method</th>
+                        <th>level</th>
+                        <th>Delete profile</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for profile in profiles %}
+                        <tr>
+                            <td><input type="checkbox" id="pk" name="pk" value={{ profile.pk }} /></td>
+                            <td style="font-family: 'Times New Roman';font-size: larger"> {{ profile.name }}</td>
+                            <td style="font-family: 'Times New Roman';font-size: larger"> {{ profile.method }}</td>
+                            <td style="font-family: 'Times New Roman';font-size: larger"> {{ profile.level }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        <button type="submit" class="btn btn-primary btn-sm">Fusion profiles</button>
+    </form>
+
+
+
+
+{% endblock %}

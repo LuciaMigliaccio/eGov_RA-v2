@@ -20,7 +20,8 @@ from django.conf.urls.static import static
 
 from parsingbpmn.views import bpmn_process_management, system_management, \
     delete_process, delete_system, process_enrichment, threat_modeling, process_view_task_type, process_view_attribute, \
-    task_type_enrichment, export_threat_modeling, threats_and_controls, bpmn_viewer, edit_process
+    task_type_enrichment, export_threat_modeling, threats_and_controls, bpmn_viewer, edit_process, context_management, \
+    profile_management, fusion_perform, fusion_profile_perform
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -37,6 +38,11 @@ urlpatterns = [
     path('threats_and_controls/<int:pk>', threats_and_controls, name='threats_and_controls'),
     path('threat_modeling/<int:pk>', threat_modeling, name='threat_modeling'),
     path('export_threat_modeling/<int:pk>', export_threat_modeling, name='export_threat_modeling'),
+    path('context_management', context_management, name = 'context_management'),
+    path('profile_management/<int:pk>', profile_management, name='profile_management'),
+    path('fusion_perform', fusion_perform, name='fusion_perform'),
+    path('fusion_profile_perform', fusion_profile_perform, name='fusion_profile_perform'),
+
 ]
 
 if settings.DEBUG:

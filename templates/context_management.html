@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+
+    <h1>Create contextualization</h1>
+    <p style="font-family: 'Times New Roman';font-size: medium">
+        This form allows you to create a new contextualization to be analyzed,
+        in case the contextualization in question is not already among those in the list below.
+    </p>
+    <form method="POST" enctype="multipart/form-data" style="font-family: 'Times New Roman';font-size: larger">
+        {% csrf_token %}
+          {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Create</button>
+      </form>
+    <h1>Contextualization available</h1>
+    <p style="font-family: 'Times New Roman';font-size: medium">
+        You can select the contextualization from those already created to continue with the analysis.
+        It is also possible to delete one of the existing contextualizations with the related profiles.
+    </p>
+    <form method="POST" action="{% url 'fusion_perform'%}">
+            {% csrf_token %}
+
+                 <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Select</th>
+                            <th>Name</th>
+                            <th>Method</th>
+                            <th>Go to profile</th>
+                            <th>Delete contextualization</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for context in contexts %}
+                            <tr>
+                                <td><input type="checkbox" name="instance" value="{{ context.pk }}"></td>
+                                <td style="font-family: 'Times New Roman';font-size: larger"> {{ context.name }}</td>
+                                <td>
+                                    <form method="POST" action="{% url 'profile_management' context.pk %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-primary btn-sm">Select context</button>
+                                    </form>
+                                </td>
+                                <td style="font-family: 'Times New Roman';font-size: larger"> {{ context.method }}</td>
+
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {{ form.as_p }}
+        <button type="submit" class="btn btn-primary btn-sm">Fusion context</button>
+    </form>
+
+{% endblock %}
