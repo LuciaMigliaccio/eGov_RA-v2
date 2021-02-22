@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+
+    <h1>Fusion controls results:</h1>
+    <p style="font-family: 'Times New Roman';font-size: medium">
+        You miss the following controls to implement in your system to achieve the target profile:
+    </p>
+
+     <table class="table">
+        <thead>
+            <tr>
+
+                <th>Subcategory </th>
+                <th>Control</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <ol>
+                        {% for subcategory in subcategory_clear_list %}
+                            <li>{{ subcategory }}</li>
+                        {% endfor %}
+                    </ol>
+                </td>
+                <td>
+                    <ul>
+                        {% for control in controls_clear_list %}
+                            <li>{{ control }}</li>
+                        {% endfor %}
+                    </ul>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+
+
+{% endblock %}

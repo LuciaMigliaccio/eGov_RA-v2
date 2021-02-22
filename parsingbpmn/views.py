@@ -8,11 +8,12 @@ from django.shortcuts import render, redirect
 from openpyxl import Workbook
 from openpyxl.styles import Font, Border, Side
 
-from .forms import ProcessForm, SystemForm, ContextualizationForm, ProfileForm
+from .forms import ProcessForm, SystemForm, ContextualizationForm, ProfileForm, FusionForm
 from .models import Process, Asset, System, Asset_has_attribute, Attribute, Asset_type, Attribute_value, \
-    Threat_has_attribute, Threat_has_control, Context, Profile, Contextualization
+    Threat_has_attribute, Threat_has_control, Context, Profile, Contextualization, profile_maturity_control, \
+    Subcategory, Control
 from .bpmn_python_master.bpmn_python import bpmn_diagram_rep as diagram
-from .algoritmo import checkPriority, comparingmaturity, convertFrom, convertTo
+from .algoritmo import checkPriority, comparingmaturity, convertFrom, convertTo, createdict, profileupgrade, comparingcontrols
 
 # Create your views here.
 
@@ -604,15 +605,17 @@ def profile_management(request,pk):
 
     if request.method == 'POST':
         form = ProfileForm(request.POST)
+        fusionform=FusionForm(request.POST)
         if form.is_valid():
             #form.save()
             last_profile = Profile.objects.latest('id')
             return redirect('profile_management', last_profile.pk)
     else:
         form = ProfileForm()
+        fusionform=FusionForm(request.POST)
     profiles = Profile.objects.filter(context=Context.objects.get(pk=pk))
     return render(request,'profile_management.html',{
-        'form':form,'profiles':profiles
+        'form':form,'profiles':profiles, 'fusionform': fusionform
     })
 
 
@@ -709,14 +712,56 @@ def fusion_perform(request):
 def fusion_profile_perform(request):
 
     if request.method == 'POST':
-        form = ProfileForm(request.POST)
-        if form.is_valid():
-            #form.save()
-            last_profile = Profile.objects.latest('id')
-            return redirect('profile_management', last_profile.pk)
+        fusionform = FusionForm(request.POST)
+        if fusionform.is_valid():
+
+            actualprofile = fusionform['actualprofile_id'].value()
+            officialprofile = fusionform['officialprofile_id'].value()
+            targetprofile= fusionform['targetprofile_id'].value()
+
+            profile1= profile_maturity_control.objects.filter(profile=Profile.objects.get(pk=actualprofile))
+            profile2 = profile_maturity_control.objects.filter(profile=Profile.objects.get(pk=officialprofile))
+            profile3 = profile_maturity_control.objects.filter(profile=Profile.objects.get(pk=targetprofile))
+            profiloattuale=profile1.values()
+            profiloufficiale = profile2.values()
+            profilotarget = profile3.values()
+
+            dict_attuale = {}
+            dict_ufficiale= {}
+            dict_target = {}
+
+            controls_attuale= createdict(profiloattuale, dict_attuale)
+            controls_ufficiale = createdict(profiloufficiale, dict_ufficiale)
+            controls_target = createdict(profilotarget, dict_target)
+
+            controllimancanti = []
+            temp= []
+
+            temp = profileupgrade(controls_attuale, controls_ufficiale)
+            controllimancanti= profileupgrade(temp, controls_target)
+
+            # la fusione è stata fatta, adesso bisogna creare una pagina in cui si mostrano tutti i controlli che si devono implementare per arrivare al profilo target
+
+            request.session['list']=controllimancanti
+            return redirect('controls_missing')
     else:
-        form = ProfileForm()
+        fusionform = FusionForm(request.POST)
     profile= Profile.objects.all()
     return render(request,'profile_management.html',{
-        'form':form,'profiles':profile
+        'form':fusionform,'profiles':profile
     })
+
+def controls_missing(request):
+    controllimancanti =request.session['list']
+
+    subcategory_clear_list = []
+    controls_clear_list= []
+
+    for item in controllimancanti:
+        element = item['subcategory_id']
+        subcategory_clear_list.append((Subcategory.objects.get(pk=element)))
+        for i,element2 in enumerate(item['control_id'],start=0):
+            item['control_id'][i] = Control.objects.get(pk=element2)
+        controls_clear_list.append(item['control_id'])
+
+    return render(request, 'controls_missing.html', {'subcategory_clear_list': subcategory_clear_list, 'controls_clear_list': controls_clear_list})

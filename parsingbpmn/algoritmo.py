@@ -74,7 +74,84 @@ def comparingmaturity(v1, v2, newelement, condizione):
 
     return newelement
 
-        
+def createdict(dictionarylist,newdict):
+
+
+    for item in dictionarylist:
+        if item['subcategory_id'] not in newdict.keys():
+            tempdict = {item['subcategory_id']: [item['control_id']]}
+            newdict.update(tempdict)
+        else:
+            tempcontrols = newdict[(item['subcategory_id'])]
+            tempcontrols.append(item['control_id'])
+            newdict[(item['subcategory_id'])] = tempcontrols
+
+    lista= []
+    for key,value in newdict.items():
+        lista.append({'subcategory_id': key, 'control_id':value})
+
+    return lista
+
+def profileupgrade(list1,list2):
+
+    i =0
+    j=0
+    result = []
+
+    while(i< len(list1) and j< len(list2)):
+
+        if list1[i]['subcategory_id'] == list2[j]['subcategory_id']:
+            newelement=[]
+            newelement = list1[i]
+            temp= []
+
+            newelement['control_id']= comparingcontrols(list1[i]['control_id'], list2[j]['control_id'], temp)
+
+            result.append(newelement)
+            i=i+1
+            j=j+1
+        elif list1[i]['subcategory_id'] < list2[j]['subcategory_id']:
+            newelement = list1[i]
+            result.append(newelement)
+            i=i+1
+        else:
+            newelement = list2[j]
+            result.append(newelement)
+            j=j+1
+
+    while (i < len(list1)):
+        newelement = list1[i]
+        result.append(newelement)
+        i = i + 1
+
+    while (j < len(list2)):
+        newelement = list2[j]
+        result.append(newelement)
+        j = j + 1
+
+    return result
+
+def comparingcontrols(v1,v2,newelement):
+    i = 0
+    j = 0
+
+    while (i < len(v1) and j < len(v2)):
+        if (v1[i] != v2[j]):
+            newelement.append(v2[j])
+            newelement.append(v1[i])
+
+        i=i+1
+        j=j+1
+
+    while (i < len(v1)):
+        newelement.append(v1[i])
+        i = i + 1
+
+    while (j < len(v2)):
+        newelement.append(v2[j])
+        j = j + 1
+
+    return newelement
 
 
 
