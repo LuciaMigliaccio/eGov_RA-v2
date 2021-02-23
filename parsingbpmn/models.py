@@ -185,7 +185,6 @@ class Subcategory(models.Model):
 
 class Context(models.Model):
     name = models.CharField(max_length=100)
-    method = models.CharField(max_length=500)
 
     class Meta:
         verbose_name = "Context"

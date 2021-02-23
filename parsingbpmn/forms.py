@@ -17,7 +17,7 @@ class ProcessForm(forms.ModelForm):
 class ContextualizationForm(forms.ModelForm):
     class Meta:
         model = Context
-        fields = ['name', 'method']
+        fields = ['name']
 
 class ProfileForm(forms.ModelForm):
     context_id = forms.ModelChoiceField(queryset=Context.objects.all(), empty_label="Select context")
@@ -28,9 +28,9 @@ class ProfileForm(forms.ModelForm):
         exclude = ['id']
 
 class FusionForm(forms.Form):
-    actualprofile_id = forms.ModelChoiceField(queryset=Profile.objects.all(), empty_label="Select actual profile")
-    officialprofile_id = forms.ModelChoiceField(queryset=Profile.objects.all(), empty_label="Select official profile")
-    targetprofile_id = forms.ModelChoiceField(queryset=Profile.objects.all(), empty_label="Select target profile")
+    actual_profile = forms.ModelChoiceField(queryset=Profile.objects.all(), empty_label="Select actual profile")
+    official_profile = forms.ModelChoiceField(queryset=Profile.objects.all(), empty_label="Select official profile")
+    target_profile= forms.ModelChoiceField(queryset=Profile.objects.all(), empty_label="Select target profile")
 
 
 

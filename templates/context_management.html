@@ -19,14 +19,11 @@
         It is also possible to delete one of the existing contextualizations with the related profiles.
     </p>
     <form method="POST" action="{% url 'fusion_perform'%}">
-            {% csrf_token %}
-
                  <table class="table">
                     <thead>
                         <tr>
                             <th>Select</th>
                             <th>Name</th>
-                            <th>Method</th>
                             <th>Go to profile</th>
                             <th>Delete contextualization</th>
                         </tr>
@@ -37,11 +34,10 @@
                                 <td><input type="checkbox" name="instance" value="{{ context.pk }}"></td>
                                 <td style="font-family: 'Times New Roman';font-size: larger"> {{ context.name }}</td>
 
-                                <td style="font-family: 'Times New Roman';font-size: larger"> {{ context.method }}</td>
                                 <td>
                                     <form method="POST" action="{% url 'profile_management' context.pk %}">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-primary btn-sm">Select context</button>
+                                            <button type="submit" class="btn btn-primary btn-sm">Select context</button>
                                     </form>
                                 </td>
 
@@ -49,6 +45,14 @@
                         {% endfor %}
                     </tbody>
                 </table>
+
+            <h1>Contextualization fusion</h1>
+            <p style="font-family: 'Times New Roman';font-size: medium">
+                Select che checkbox of the contextualization you want to merge, choose a name and click the button
+            </p>
+
+
+            {% csrf_token %}
             {{ form.as_p }}
         <button type="submit" class="btn btn-primary btn-sm">Fusion context</button>
     </form>
