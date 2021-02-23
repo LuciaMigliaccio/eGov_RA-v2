@@ -1,8 +1,5 @@
-import csv
 from datetime import datetime
 
-from django.core.files.storage import FileSystemStorage
-from django.core.serializers import python
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from openpyxl import Workbook
@@ -13,7 +10,8 @@ from .models import Process, Asset, System, Asset_has_attribute, Attribute, Asse
     Threat_has_attribute, Threat_has_control, Context, Profile, Contextualization, profile_maturity_control, \
     Subcategory, Control
 from .bpmn_python_master.bpmn_python import bpmn_diagram_rep as diagram
-from .algoritmo import checkPriority, comparingmaturity, convertFrom, convertTo, createdict, profileupgrade, comparingcontrols
+from utils.fusion_functions import checkPriority, comparingmaturity, convertFrom, convertTo, createdict, profileupgrade
+
 
 # Create your views here.
 
@@ -67,9 +65,14 @@ def bpmn_process_management(request,pk):
                     if type(dizionario) is dict:
                         if dizionario['type'].endswith("Task"):
                             attribute_value = []
+                            id_task = dizionario['id']
+                            x = dizionario["x"]
+                            y = dizionario["y"]
+                            width = dizionario["width"]
+                            height = dizionario["height"]
+                            position = x + ":" + y + ":" + width + ":" + height
                             if dizionario['type'].startswith("send"):
                                 asset_type = Asset_type.objects.get(name="Send task")
-                                id_task=dizionario['id']
                                 e=""
                                 for assoc in associations:
                                     if(id_task==assoc['association'][1]):
@@ -145,7 +148,7 @@ def bpmn_process_management(request,pk):
                             elif dizionario['type'].startswith("business"):
                                 asset_type = Asset_type.objects.get(name="Business rule task")
                                 attribute_value.append(Attribute_value.objects.get(value="Business rule task"))
-                            asset = Asset(name=dizionario['node_name'], process=Process.objects.get(pk=pk),asset_type=asset_type)
+                            asset = Asset(name=dizionario['node_name'],bpmn_id=id_task,position=position, process=Process.objects.get(pk=pk),asset_type=asset_type)
                             asset.save()
                             attribute = []
                             for value in attribute_value:
@@ -266,6 +269,8 @@ def process_view_attribute(request,pk):
 def process_enrichment(request,pk):
     if request.method == "POST":
         task_list = Asset.objects.filter(process=Process.objects.get(pk=pk))
+        pathfile=Process.objects.filter(id=pk)[0].xml
+
         check_attribute = False
         for task in task_list:
             if not Asset_has_attribute.objects.filter(asset=task):
@@ -286,6 +291,10 @@ def process_enrichment(request,pk):
             for asset,attribute in zip(assets_for_process,attributes):
                 if attribute != None:
                     asset_has_attribute = Asset_has_attribute(asset=asset,attribute=attribute)
+
+                    writeTextAnnotation_bpmn(pathfile,asset.position,asset.bpmn_id,attribute.attribute_value)
+
+
                     asset_has_attribute.save()
 
             return redirect('threats_and_controls',pk)
@@ -308,6 +317,63 @@ def process_enrichment(request,pk):
             return redirect('threats_and_controls', pk)
     else:
         return redirect('process_enrichment',pk)
+
+
+import random
+import string
+
+def get_random_string(length):
+    letters = string.ascii_letters
+    result_str = ''.join(random.choice(letters) for i in range(length))
+    return result_str
+
+def writeTextAnnotation_bpmn(pathfile,position,taskId,attribute_value):
+    textAnnotationId="TextAnnotation_"+get_random_string(7)
+    textAnnotation="\
+    <bpmn:textAnnotation id=\""+str(textAnnotationId)+"\">\n \
+    <bpmn:text>"+str(attribute_value)+"</bpmn:text>\n \
+    </bpmn:textAnnotation>\n"
+    associationId="Association_"+get_random_string(7)
+    association="<bpmn:association id=\""+str(associationId)+"\" sourceRef=\""+taskId+"\" targetRef=\""+textAnnotationId+"\" />"
+    positionValues=position.split(":")
+    x=positionValues[0]
+    y=positionValues[1]
+    width=positionValues[2]
+    height=positionValues[3]
+
+    stringToWrite=str(textAnnotation)+" "+str(association)
+    shapetextAnn="<bpmndi:BPMNShape id=\""+textAnnotationId+"_di\" bpmnElement="+textAnnotationId+">\n\
+        <dc:Bounds x=\""+str(int(x)+20)+"\" y=\""+str(int(y)+20)+"\" width=\""+str(width)+"\" height=\""+height+"\" />\n\
+      </bpmndi:BPMNShape>\n"
+
+    shapeAssoc="<bpmndi:BPMNShape id=\""+associationId+"_di\" bpmnElement="+associationId+">\n\
+        <dc:Bounds x=\""+x+"\" y=\""+y+"\"/>\n\
+        <dc:Bounds x=\""+str(int(x)+20)+"\" y=\""+str(int(y)+20)+"\"/>\n\
+      </bpmndi:BPMNShape>\n"
+
+    f = open(str(pathfile), "r+")
+    stringFile=f.read()
+
+    from xml.dom.minidom import parse, parseString
+
+    datasource = open(str(pathfile)) #convert to minidom object
+    minidomObject = parse(datasource)
+    process = minidomObject.getElementsByTagName('bpmn:process')
+    for e in process:
+        if(taskId in e.toxml()):
+
+            print("per il task "+str(taskId)+" il process è ")
+            print(e.toxml())
+
+    #task[0].firstChild.nodeValue
+
+    #Process_1j43nxw
+
+
+    #print(minidomObject.toxml()) #convert to xml string
+
+
+
 
 def edit_process(request,pk):
     if request.method == "POST":
@@ -636,13 +702,10 @@ def fusion_perform(request):
 
             context1= listofcontexts[0]
             context2= listofcontexts[1]
-            #devo prima convertire i dati
 
             context1= convertTo(context1)
             context2= convertTo(context2)
 
-            # a questo punto ho sostituito i livelli d ipriorita e i livelli di maturita, ho quindi le corrette liste per poter operare
-            # mo devo effettivamente fare la fusione
 
             i=0
             j=0
@@ -650,7 +713,7 @@ def fusion_perform(request):
             while(i< len(context1) and j< len(context2)):
 
                 if context1[i]['subcategory_id'] == context2[j]['subcategory_id']:
-                    #se la subcategory è in entrambe le context
+
                     newelement = []
                     newelement = context1[i]
 
@@ -663,7 +726,7 @@ def fusion_perform(request):
                     if newelement['priority'] == 3:
                         checkPriority(context1[i]['maturity_level'], context2[j]['maturity_level'])
 
-                    #confronto maturity level
+
                     temp=[]
                     newelement['maturity_level']= comparingmaturity(context1[i]['maturity_level'], context2[j]['maturity_level'], temp, True)
 
@@ -690,8 +753,6 @@ def fusion_perform(request):
                 newcontext.append(newelement)
                 j=j+1
 
-
-            #ho creato la nuova context, mo dovrei riconvertire i dati e caricarli nel db
             newcontext= convertFrom(newcontext)
             form.save()
             last_context = Context.objects.latest('id')
@@ -739,8 +800,6 @@ def fusion_profile_perform(request):
 
             temp = profileupgrade(controls_attuale, controls_ufficiale)
             controllimancanti= profileupgrade(temp, controls_target)
-
-            # la fusione è stata fatta, adesso bisogna creare una pagina in cui si mostrano tutti i controlli che si devono implementare per arrivare al profilo target
 
             request.session['list']=controllimancanti
             return redirect('controls_missing')
