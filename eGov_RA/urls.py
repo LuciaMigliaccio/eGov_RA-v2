@@ -21,7 +21,7 @@ from django.conf.urls.static import static
 from parsingbpmn.views import bpmn_process_management, system_management, \
     delete_process, delete_system, process_enrichment, threat_modeling, process_view_task_type, process_view_attribute, \
     task_type_enrichment, export_threat_modeling, threats_and_controls, bpmn_viewer, edit_process, context_management, \
-    profile_management, fusion_perform, fusion_profile_perform, controls_missing
+    profile_management, fusion_perform, fusion_profile_perform, controls_missing, profile_roadmap
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -43,6 +43,7 @@ urlpatterns = [
     path('fusion_perform', fusion_perform, name='fusion_perform'),
     path('fusion_profile_perform', fusion_profile_perform, name='fusion_profile_perform'),
     path('controls_missing', controls_missing, name='controls_missing'),
+    path('profile_roadmap/<int:pk>', profile_roadmap, name='profile_roadmap')
 
 ]
 

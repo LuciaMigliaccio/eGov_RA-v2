@@ -765,3 +765,18 @@ def controls_missing(request):
         controls_clear_list.append(item['control_id'])
 
     return render(request, 'controls_missing.html', {'subcategory_clear_list': subcategory_clear_list, 'controls_clear_list': controls_clear_list})
+
+def profile_roadmap(request, pk):
+
+    if request.method == 'POST':
+
+        profile3 = profile_maturity_control.objects.filter(profile=Profile.objects.get(pk=pk))
+        profilotarget = profile3.values()
+        dict_target = {}
+        controls_target = createdict(profilotarget, dict_target)
+        controllimancanti = controls_target
+
+        request.session['list'] = controllimancanti
+        return redirect('controls_missing')
+    else:
+        return redirect('profile_management')

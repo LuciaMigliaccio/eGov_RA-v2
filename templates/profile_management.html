@@ -27,6 +27,7 @@
                 <th>Name</th>
                 <th>Method</th>
                 <th>level</th>
+                <th>Show roadmap</th>
                 <th>Delete profile</th>
             </tr>
         </thead>
@@ -37,12 +38,22 @@
                     <td style="font-family: 'Times New Roman';font-size: larger"> {{ profile.name }}</td>
                     <td style="font-family: 'Times New Roman';font-size: larger"> {{ profile.method }}</td>
                     <td style="font-family: 'Times New Roman';font-size: larger"> {{ profile.level }}</td>
+                    <td>
+                        <form method="POST" action="{% url 'profile_roadmap' profile.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary btn-sm">Select profile</button>
+                        </form>
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
 
 
+    <h1>Control fusion</h1>
+    <p style="font-family: 'Times New Roman';font-size: medium">
+        Here you can select your actual profile, the official profile of the same level and the target profile you want to reach
+    </p>
     <form method="POST" action="{% url 'fusion_profile_perform' %}">
             {% csrf_token %}
             {{ fusionform.as_p }}
