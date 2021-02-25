@@ -202,7 +202,6 @@ class Contextualization(models.Model):
 
 class Profile(models.Model):
     name = models.CharField(max_length=100)
-    method = models.CharField(max_length=500)
     level = models.CharField(max_length=100, default = 'minimo')
     context = models.ForeignKey(Context, on_delete=models.CASCADE)
 

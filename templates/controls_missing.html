@@ -19,18 +19,21 @@
         <tbody>
             <tr>
                 <td>
-                    <ol>
-                        {% for subcategory in subcategory_clear_list %}
-                            <li>{{ subcategory }}</li>
+
+
+                        {% for item in subcategory_clear_list %}
+                            <li>{{ item }}</li>
+                           {% for control in controls_clear_list.item %}
+                                    <li>{{ control }}</li>
+                           {% endfor %}
+
+
                         {% endfor %}
-                    </ol>
+
+
                 </td>
                 <td>
-                    <ul>
-                        {% for control in controls_clear_list %}
-                            <li>{{ control }}</li>
-                        {% endfor %}
-                    </ul>
+
                 </td>
             </tr>
         </tbody>
