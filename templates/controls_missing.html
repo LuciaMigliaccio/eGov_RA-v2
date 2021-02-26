@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-
+{% load get_item from template_filters %}
 {% block content %}
 
     <h1>Fusion controls results:</h1>
@@ -13,21 +13,24 @@
             <tr>
 
                 <th>Subcategory </th>
-                <th>Control</th>
+                <th>Controls</th>
+
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td>
-
-
-                        {% for item in subcategory_clear_list %}
-                            <li>{{ item }}</li>
-                           {% for control in controls_clear_list.item %}
-                                    <li>{{ control }}</li>
-                           {% endfor %}
-
-
+                        {% for subcategory in subcategory_clear_list %}
+                            <tr>
+                                <td>{{ subcategory}}: {{ subcategory.description}} </td>
+                                <td>
+                                <ul>
+                                    {% for control in controls_clear_list|index:forloop.counter0 %}
+                                        <li>{{ control}}: {{ control.description}} </li>
+                                    {% endfor %}
+                                </ul>
+                                </td>
+                            </tr>
                         {% endfor %}
 
 
@@ -38,6 +41,7 @@
             </tr>
         </tbody>
     </table>
+
 
 
 
