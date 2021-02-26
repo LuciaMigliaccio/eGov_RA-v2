@@ -660,7 +660,7 @@ def context_management(request):
         if form.is_valid():
             form.save()
             last_context = Context.objects.latest('id')
-            return redirect('profile_management', last_context.pk)
+            return redirect('create_context', last_context.pk)
     else:
         form = ContextualizationForm()
         selectform = SelectForm(request.POST)
@@ -668,6 +668,39 @@ def context_management(request):
     return render(request,'context_management.html',{
         'form':form,'selectform':selectform, 'contexts':context
     })
+
+def create_context(request,pk):
+
+    subcategory_list=Subcategory.objects.all()
+    priority_list=["Bassa", "Media", "Alta"]
+    maturity_level_list=["Insufficiente", "Minimo", "Standard", "Avanzato"]
+    context= pk
+
+    return render(request, 'create_context.html', {'subcategory_list': subcategory_list, 'priority_list': priority_list, 'context':context })
+
+
+def save_contextualization(request,pk):
+
+    if request.method == 'POST':
+        subcategory_list = request.POST.getlist('subcategory')
+        priority= request.POST.getlist('priority')
+        maturitylevel=request.POST.getlist('maturity_level')
+        print(subcategory_list)
+        print(priority)
+
+        maturity_level=[]
+        for element in maturitylevel:
+            if(len(element) > 1):
+                maturity_level.append(element)
+
+        for i,subcategory in enumerate(subcategory_list, start=0):
+            newcontextualization=Contextualization(subcategory_id=subcategory, context_id=pk, priority=priority[i], maturity_level=maturity_level[i])
+            newcontextualization.save()
+
+    context = Context.objects.all()
+    return render(request, 'context_management.html', {'contexts': context})
+
+
 
 def profile_management(request,pk):
 
@@ -891,3 +924,16 @@ def profile_roadmap(request, pk):
         return redirect('controls_missing')
     else:
         return redirect('profile_management')
+
+def delete_context(request,pk):
+    if request.method == 'POST':
+        context = Context.objects.get(pk=pk)
+        context.delete()
+    return redirect('context_management')
+
+def delete_profile(request,pk):
+    if request.method == 'POST':
+        profile = Profile.objects.get(pk=pk)
+        context_id = profile.context.pk
+        profile.delete()
+    return redirect('profile_management', context_id)

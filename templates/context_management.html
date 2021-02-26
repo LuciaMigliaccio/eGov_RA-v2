@@ -39,6 +39,12 @@
                                 <button type="submit" class="btn btn-primary btn-sm">Select context</button>
                         </form>
                     </td>
+                    <td>
+                        <form method="POST" action="{% url 'delete_context' context.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">Delete context</button>
+                        </form>
+                    </td>
 
                 </tr>
             {% endfor %}

@@ -9,7 +9,7 @@ def convertFromDatabase(context):
             subcategory["priority"]=1
     
     for subcategory in context:
-        subcategory["maturity_level"]= subcategory["maturity_level"].split("\r\n")
+        subcategory["maturity_level"]= subcategory["maturity_level"].split(",")
         
         subcategory["maturity_level"] = [level.replace('Insufficiente', '0') for level in subcategory["maturity_level"]]
         subcategory["maturity_level"] = [level.replace('Minimo', '1') for level in subcategory["maturity_level"]]
@@ -33,7 +33,7 @@ def convertToDatabase(context):
         subcategory["maturity_level"] = [level.replace('2', 'Standard') for level in subcategory["maturity_level"]]
         subcategory["maturity_level"] = [level.replace('3', 'Avanzato') for level in subcategory["maturity_level"]]
 
-        subcategory["maturity_level"] = "\r\n".join(subcategory["maturity_level"])
+        subcategory["maturity_level"] = ",".join(subcategory["maturity_level"])
     return context
 
 def checkPriority(maturity1, maturity2):

@@ -42,6 +42,12 @@
                                 <button type="submit" class="btn btn-primary btn-sm">Select profile</button>
                         </form>
                     </td>
+                    <td>
+                        <form method="POST" action="{% url 'delete_profile' profile.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">Delete profile</button>
+                        </form>
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
