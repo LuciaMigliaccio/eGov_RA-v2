@@ -705,19 +705,20 @@ def profile_management(request,pk):
 def create_profile(request,pk):
     profile=Profile.objects.get(pk=pk)
     context= profile.context_id
-    subcategory_in_context=(Contextualization.objects.filter(context=context)).values()
+    values_in_context=(Contextualization.objects.filter(context=context)).values()
     subcategory_dict=[]
-    for subcategory in subcategory_in_context:
-        temp=Subcategory.objects.filter(id=subcategory['subcategory_id'])
+    maturity_dict=[]
+    for value in values_in_context:
+        temp=Subcategory.objects.filter(id=value['subcategory_id'])
         subcategory_dict.append((list(temp.values()))[0])
+        tempmaturity=(value['maturity_level']).split(",")
+        maturity_dict.append(tempmaturity)
 
     priority_list=["Bassa", "Media", "Alta"]
-    #si devono prendere i livelli di maturita messi nella context e metterli in una lista(split ecc)
-    maturity_level_list=["Insufficiente", "Minimo", "Standard", "Avanzato"]
     profile= pk
     request.session['list'] = subcategory_dict
 
-    return render(request, 'create_profile.html', {'subcategory_dict': subcategory_dict, 'priority_list': priority_list, 'maturity_level_list':maturity_level_list,'profile':profile })
+    return render(request, 'create_profile.html', {'subcategory_dict': subcategory_dict, 'priority_list': priority_list, 'maturity_dict':maturity_dict,'profile':profile })
 
 def save_profile(request,pk):
     subcategory_dict=request.session['list']
@@ -741,7 +742,6 @@ def save_profile(request,pk):
 def profile_controls(request,pk):
     subcategory_dict=request.session['list']
     subname_list=[]
-
     controls_list = Control.objects.all()
     for subcategory in subcategory_dict:
         subname_list.append(subcategory['name'])

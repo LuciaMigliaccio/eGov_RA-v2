@@ -3,9 +3,9 @@
 {% load get_item from template_filters %}
 {% block content %}
 
-    <h1>Creation of a new contextualization:</h1>
+    <h1>Selection of controls:</h1>
     <p style="font-family: 'Times New Roman';font-size: medium">
-        Select the subcategories you want with their priority and maturity level
+        Select the subcategory within the controls you have implemented for each one of them
     </p>
     <form method="POST" name = "formname" action="{% url 'save_profile_controls' profile %}">
         {% csrf_token %}
@@ -24,7 +24,7 @@
                 <ul class = sub>
                     <select name="sublist" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
                          <option value="" selected disabled hidden>Choose here</option>
-                        {% for value in sublist %}
+                        {% for value in subname_list %}
                         <option>{{ value}}</option>
                         {% endfor %}
                     </select>

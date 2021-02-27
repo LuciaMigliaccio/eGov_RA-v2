@@ -3,9 +3,9 @@
 {% load get_item from template_filters %}
 {% block content %}
 
-    <h1>Creation of a new contextualization:</h1>
+    <h1>Creation of a new profile:</h1>
     <p style="font-family: 'Times New Roman';font-size: medium">
-        Select the subcategories you want with their priority and maturity level
+        Select the priority level and the maturity level for each subcategory
     </p>
     <form method="POST" name = "formname" action="{% url 'save_profile' profile %}">
         {% csrf_token %}
@@ -20,7 +20,7 @@
         <tbody>
             <tr>
                 <td>
-                    {% for subcategory in subcategories %}
+                    {% for subcategory in subcategory_dict %}
                         <tr>
                             <td>{{ subcategory}}: {{ subcategory.description}} </td>
                             <td>
@@ -37,8 +37,12 @@
                             <ul>
                                 <select name="maturity_level" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
                                      <option value="" selected disabled hidden>Choose here</option>
-                                    {% for value in maturity_level_list %}
-                                    <option>{{ value}}</option>
+                                    {% for value in maturity_dict %}
+                                        {% if forloop.counter == forloop.parentloop.counter %}
+                                            {% for levels in value %}
+                                            <option>{{ levels}}</option>
+                                            {% endfor %}
+                                        {% endif %}
                                     {% endfor %}
                                 </select>
                             </ul>
