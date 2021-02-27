@@ -22,7 +22,7 @@ from parsingbpmn.views import bpmn_process_management, system_management, \
     delete_process, delete_system, process_enrichment, threat_modeling, process_view_task_type, process_view_attribute, \
     task_type_enrichment, export_threat_modeling, threats_and_controls, bpmn_viewer, edit_process, context_management, \
     profile_management, fusion_perform, fusion_profile_perform, controls_missing, profile_roadmap, delete_profile, \
-    delete_context, create_context, save_contextualization
+    delete_context, create_context, save_contextualization, create_profile, save_profile, profile_controls, save_profile_controls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -48,10 +48,11 @@ urlpatterns = [
     path('delete_profile/<int:pk>', delete_profile, name='delete_profile'),
     path('delete_context/<int:pk>', delete_context, name='delete_context'),
     path('create_context/<int:pk>', create_context, name='create_context'),
-    path('save_contextualization/<int:pk>', save_contextualization, name='save_contextualization')
-
-
-
+    path('save_contextualization/<int:pk>', save_contextualization, name='save_contextualization'),
+    path('create_profile/<int:pk>', create_profile, name='create_profile'),
+    path('save_profile/<int:pk>', save_profile, name='save_profile'),
+    path('profile_controls/<int:pk>', profile_controls, name='profile_controls'),
+    path('save_profile_controls/<int:pk>', save_profile_controls, name='save_profile_controls')
 
 ]
 

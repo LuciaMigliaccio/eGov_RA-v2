@@ -1,4 +1,5 @@
 from datetime import datetime
+from django.core import serializers
 
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -708,9 +709,11 @@ def profile_management(request,pk):
         form = ProfileForm(request.POST)
         fusionform=FusionForm(request.POST)
         if form.is_valid():
-            #form.save()
+            saved_form = form.save(commit=False)
+            saved_form.context_id = pk
+            saved_form.save()
             last_profile = Profile.objects.latest('id')
-            return redirect('profile_management', last_profile.pk)
+            return redirect('create_profile', last_profile.pk)
     else:
         form = ProfileForm()
         fusionform=FusionForm(request.POST)
@@ -718,6 +721,84 @@ def profile_management(request,pk):
     return render(request,'profile_management.html',{
         'form':form,'profiles':profiles, 'fusionform': fusionform
     })
+
+def create_profile(request,pk):
+
+    profile=Profile.objects.get(pk=pk)
+    context= profile.context_id
+    subcategory_list=(Contextualization.objects.filter(context=context)).values()
+
+    subcategories=[]
+    for subcategory in subcategory_list:
+        temp=Subcategory.objects.filter(id=subcategory['subcategory_id'])
+        subcategories.append((list(temp.values()))[0])
+
+    priority_list=["Bassa", "Media", "Alta"]
+    maturity_level_list=["Insufficiente", "Minimo", "Standard", "Avanzato"]
+
+    profile= pk
+    request.session['list'] = subcategories
+
+
+    return render(request, 'create_profile.html', {'subcategories': subcategories, 'priority_list': priority_list, 'maturity_level_list':maturity_level_list,'profile':profile })
+
+def save_profile(request,pk):
+    subcategories=request.session['list']
+    if request.method == 'POST':
+        priority= request.POST.getlist('priority')
+        maturitylevel=request.POST.getlist('maturity_level')
+        sub_list=[]
+
+        for subcat in subcategories:
+            sub= subcat['id']
+            sub_list.append(sub)
+
+
+        for i,subcategory in enumerate(sub_list,start=0):
+            print(subcategory)
+            newprofilehassubcategory= profile_has_subcategory(profile_id=pk, subcategory_id=subcategory, priority=priority[i], maturity_level=maturitylevel[i])
+            newprofilehassubcategory.save()
+
+    request.session['list']=subcategories
+    return redirect('profile_controls', pk)
+
+def profile_controls(request,pk):
+    subcategories=request.session['list']
+    sublist=[]
+
+    controls_list = Control.objects.all()
+    for subcategory in subcategories:
+        sublist.append(subcategory['name'])
+
+
+    profile=pk
+
+
+    return render(request, 'profile_controls.html', {'sublist': sublist, 'controls_list':controls_list, 'profile': profile})
+
+def save_profile_controls(request,pk):
+
+    if request.method == 'POST':
+        subcategory= request.POST.getlist('sublist')
+        controls=request.POST.getlist('controls')
+        sub_list=[]
+        control_list=[]
+
+        for controllo in controls:
+            contro=(Control.objects.get(name=controllo)).id
+            control_list.append(contro)
+        for subcat in subcategory:
+            sub= (Subcategory.objects.get(name=subcat)).id
+            sub_list.append(sub)
+
+
+        for i,controls in enumerate(controls,start=0):
+            newprofilecontrol=profile_maturity_control(profile_id=pk, subcategory_id=sub_list[i], control_id=control_list[i])
+            newprofilecontrol.save()
+
+
+    profile = Profile.objects.all()
+    return render(request, 'profile_management.html', {'profile': profile})
 
 
 def fusion_perform(request):
@@ -884,7 +965,7 @@ def fusion_profile_perform(request):
 
             temp = profileupgrade(controls_attuale, controls_ufficiale)
             controllimancanti= profileupgrade(temp, controls_target)
-
+            print(controllimancanti)
             request.session['list']=controllimancanti
             return redirect('controls_missing')
     else:

@@ -20,12 +20,12 @@ class ContextualizationForm(forms.ModelForm):
         fields = ['name']
 
 class ProfileForm(forms.ModelForm):
-    context_id = forms.ModelChoiceField(queryset=Context.objects.all(), empty_label="Select context")
+
 
     class Meta:
         model=Profile
-        fields=['name', 'level', 'context_id']
-        exclude = ['id']
+        fields=['name', 'level' ]
+        exclude = ['context_id']
 
 class FusionForm(forms.Form):
     actual_profile = forms.ModelChoiceField(queryset=Profile.objects.all(), empty_label="Select actual profile")

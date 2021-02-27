@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% load get_item from template_filters %}
+{% block content %}
+
+    <h1>Creation of a new contextualization:</h1>
+    <p style="font-family: 'Times New Roman';font-size: medium">
+        Select the subcategories you want with their priority and maturity level
+    </p>
+    <form method="POST" name = "formname" action="{% url 'save_profile' profile %}">
+        {% csrf_token %}
+
+     <table class="table">
+        <thead>
+            <tr>
+
+                <th>Subcategory </th>
+                <th>Priority Level</th>
+                <th>Maturity Level</th>
+
+
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                        {% for subcategory in subcategories %}
+                            <tr>
+
+
+                                <td>{{ subcategory}}: {{ subcategory.description}} </td>
+                                <td>
+                                <ul>
+                                    <select name="priority" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
+
+                                         <option value="" selected disabled hidden>Choose here</option>
+                                        {% for value in priority_list %}
+                                        <option>{{ value}}</option>
+                                        {% endfor %}
+                                    </select>
+                                </ul>
+                                </td>
+                                <td>
+                                    <ul>
+                                    <select name="maturity_level" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
+
+                                         <option value="" selected disabled hidden>Choose here</option>
+                                        {% for value in maturity_level_list %}
+                                        <option>{{ value}}</option>
+                                        {% endfor %}
+                                    </select>
+                                </ul>
+
+
+                                </td>
+
+
+                            </tr>
+                        {% endfor %}
+
+
+                </td>
+                <td>
+
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <button type="submit" class="btn btn-primary btn-sm">save profile</button>
+    </form>
+
+
+
+
+
+{% endblock %}

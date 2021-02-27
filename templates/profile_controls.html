@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% load get_item from template_filters %}
+{% block content %}
+
+    <h1>Creation of a new contextualization:</h1>
+    <p style="font-family: 'Times New Roman';font-size: medium">
+        Select the subcategories you want with their priority and maturity level
+    </p>
+    <form method="POST" name = "formname" action="{% url 'save_profile_controls' profile %}">
+        {% csrf_token %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+     <table class="table">
+        <thead>
+            <tr>
+
+                <th>Subcategory </th>
+                <th>Control</th>
+
+
+            </tr>
+        </thead>
+
+                    <tbody>
+                    <tr>
+                    <td>
+
+                    <ul class = sub>
+
+                        <select name="sublist" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
+
+                             <option value="" selected disabled hidden>Choose here</option>
+                            {% for value in sublist %}
+                            <option>{{ value}}</option>
+                            {% endfor %}
+                        </select>
+                    </ul>
+
+                    </td>
+                    <td>
+                        <ul class = control>
+                        <select name="controls" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
+
+                             <option value="" selected disabled hidden>Choose here</option>
+                            {% for value in controls_list %}
+                            <option>{{ value}}</option>
+                            {% endfor %}
+                        </select>
+                    </ul>
+                    </td>
+                    <td><input type='button' class='AddNew' value='Add new item'></td>
+                    </tr>
+
+
+                    </tbody>
+
+     </table>
+
+
+
+
+    <button type="submit" class="btn btn-primary btn-sm">save profile</button>
+    </form>
+
+    <script>
+        $('.AddNew').click(function(){
+        var row = $(this).closest('tr').clone();
+        row.find('input').val('');
+        $(this).closest('tr').after(row);
+        $('input[type="button"]', row).removeClass('AddNew')
+                                 .addClass('RemoveRow').val('Remove item');
+        });
+
+        $('table').on('click', '.RemoveRow', function(){
+        $(this).closest('tr').remove();
+        });
+    </script>
+
+
+{% endblock %}
