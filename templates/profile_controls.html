@@ -13,54 +13,41 @@
      <table class="table">
         <thead>
             <tr>
-
                 <th>Subcategory </th>
                 <th>Control</th>
-
-
             </tr>
         </thead>
 
-                    <tbody>
-                    <tr>
-                    <td>
-
-                    <ul class = sub>
-
-                        <select name="sublist" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
-
-                             <option value="" selected disabled hidden>Choose here</option>
-                            {% for value in sublist %}
-                            <option>{{ value}}</option>
-                            {% endfor %}
-                        </select>
-                    </ul>
-
-                    </td>
-                    <td>
-                        <ul class = control>
-                        <select name="controls" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
-
-                             <option value="" selected disabled hidden>Choose here</option>
-                            {% for value in controls_list %}
-                            <option>{{ value}}</option>
-                            {% endfor %}
-                        </select>
-                    </ul>
-                    </td>
-                    <td><input type='button' class='AddNew' value='Add new item'></td>
-                    </tr>
-
-
-                    </tbody>
-
+        <tbody>
+        <tr>
+            <td>
+                <ul class = sub>
+                    <select name="sublist" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
+                         <option value="" selected disabled hidden>Choose here</option>
+                        {% for value in sublist %}
+                        <option>{{ value}}</option>
+                        {% endfor %}
+                    </select>
+                </ul>
+            </td>
+            <td>
+                <ul class = control>
+                    <select name="controls" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
+                         <option value="" selected disabled hidden>Choose here</option>
+                        {% for value in controls_list %}
+                        <option>{{ value}}</option>
+                        {% endfor %}
+                    </select>
+                 </ul>
+            </td>
+            <td>
+                <input type='button' class='AddNew' value='Add new item'>
+            </td>
+        </tr>
+        </tbody>
      </table>
-
-
-
-
-    <button type="submit" class="btn btn-primary btn-sm">save profile</button>
-    </form>
+     <button type="submit" class="btn btn-primary btn-sm">save profile</button>
+     </form>
 
     <script>
         $('.AddNew').click(function(){
@@ -75,6 +62,5 @@
         $(this).closest('tr').remove();
         });
     </script>
-
 
 {% endblock %}

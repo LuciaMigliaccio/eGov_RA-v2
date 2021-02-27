@@ -10,7 +10,6 @@ def convertFromDatabase(context):
     
     for subcategory in context:
         subcategory["maturity_level"]= subcategory["maturity_level"].split(",")
-        
         subcategory["maturity_level"] = [level.replace('Insufficiente', '0') for level in subcategory["maturity_level"]]
         subcategory["maturity_level"] = [level.replace('Minimo', '1') for level in subcategory["maturity_level"]]
         subcategory["maturity_level"] = [level.replace('Standard', '2') for level in subcategory["maturity_level"]]
@@ -27,12 +26,10 @@ def convertToDatabase(context):
             subcategory["priority"]="Bassa"
     
     for subcategory in context:
-        
         subcategory["maturity_level"] = [level.replace('0', 'Insufficiente') for level in subcategory["maturity_level"]]
         subcategory["maturity_level"] = [level.replace('1', 'Minimo') for level in subcategory["maturity_level"]]
         subcategory["maturity_level"] = [level.replace('2', 'Standard') for level in subcategory["maturity_level"]]
         subcategory["maturity_level"] = [level.replace('3', 'Avanzato') for level in subcategory["maturity_level"]]
-
         subcategory["maturity_level"] = ",".join(subcategory["maturity_level"])
     return context
 
@@ -51,7 +48,6 @@ def comparingmaturity(v1, v2, newelement):
     j=0
     
     while (i< len(v1) and j< len(v2)):
-
         if(v1[i] < v2[j]):
             newelement.append(v1[i])
             i=i+1
@@ -97,14 +93,11 @@ def profileupgrade(list1,list2):
     result = []
 
     while(i< len(list1) and j< len(list2)):
-
         if list1[i]['subcategory_id'] == list2[j]['subcategory_id']:
             newelement=[]
             newelement = list1[i]
             temp= []
-
             newelement['control_id']= comparingcontrols(list1[i]['control_id'], list2[j]['control_id'], temp)
-
             result.append(newelement)
             i=i+1
             j=j+1
@@ -137,7 +130,6 @@ def comparingcontrols(v1,v2,newelement):
         if (v1[i] != v2[j]):
             newelement.append(v2[j])
             newelement.append(v1[i])
-
         i=i+1
         j=j+1
 

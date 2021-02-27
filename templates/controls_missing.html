@@ -11,38 +11,28 @@
      <table class="table">
         <thead>
             <tr>
-
                 <th>Subcategory </th>
                 <th>Controls</th>
-
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td>
-                        {% for subcategory in subcategory_clear_list %}
-                            <tr>
-                                <td>{{ subcategory}}: {{ subcategory.description}} </td>
-                                <td>
-                                <ul>
-                                    {% for control in controls_clear_list|index:forloop.counter0 %}
-                                        <li>{{ control}}: {{ control.description}} </li>
-                                    {% endfor %}
-                                </ul>
-                                </td>
+                    {% for subcategory in subcategory_clear_list %}
+                        <tr>
+                            <td>{{ subcategory}}: {{ subcategory.description}} </td>
+                            <td>
+                            <ul>
+                                {% for control in controls_clear_list|index:forloop.counter0 %}
+                                    <li>{{ control}}: {{ control.description}} </li>
+                                {% endfor %}
+                            </ul>
+                            </td>
                             </tr>
-                        {% endfor %}
-
-
-                </td>
-                <td>
-
+                    {% endfor %}
                 </td>
             </tr>
         </tbody>
     </table>
-
-
-
 
 {% endblock %}

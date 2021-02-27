@@ -1,12 +1,11 @@
 from datetime import datetime
-from django.core import serializers
 
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from openpyxl import Workbook
 from openpyxl.styles import Font, Border, Side
 
-from .forms import ProcessForm, SystemForm, ContextualizationForm, ProfileForm, FusionForm, SelectForm
+from .forms import ProcessForm, SystemForm, ContextualizationForm, ProfileForm, FusionForm, SelectContextForm
 from .models import Process, Asset, System, Asset_has_attribute, Attribute, Asset_type, Attribute_value, \
     Threat_has_attribute, Threat_has_control, Context, Profile, Contextualization, profile_maturity_control, \
     Subcategory, Control, profile_has_subcategory, Subcategory_is_implemented_through_control
@@ -161,8 +160,6 @@ def bpmn_process_management(request,pk):
                             asset = Asset(name=dizionario['node_name'], process=Process.objects.get(pk=pk))
                             asset.save()
 
-
-
             return redirect('process_view_task_type', pk)
     else:
         form = ProcessForm()
@@ -230,7 +227,6 @@ def task_type_enrichment(request,pk):
         return redirect('process_view_attribute',pk)
     else:
         return redirect('task_type_enrichment',pk)
-
 
 def process_view_attribute(request,pk):
     task_list = Asset.objects.filter(process=Process.objects.get(pk=pk))
@@ -319,7 +315,6 @@ def process_enrichment(request,pk):
     else:
         return redirect('process_enrichment',pk)
 
-
 import random
 import string
 
@@ -372,9 +367,6 @@ def writeTextAnnotation_bpmn(pathfile,position,taskId,attribute_value):
 
 
     #print(minidomObject.toxml()) #convert to xml string
-
-
-
 
 def edit_process(request,pk):
     if request.method == "POST":
@@ -654,9 +646,8 @@ def bpmn_viewer(request,pk):
     })
 
 def context_management(request):
-
     if request.method == 'POST':
-        selectform = SelectForm(request.POST)
+        selectform = SelectContextForm(request.POST)
         form = ContextualizationForm(request.POST)
         if form.is_valid():
             form.save()
@@ -664,31 +655,23 @@ def context_management(request):
             return redirect('create_context', last_context.pk)
     else:
         form = ContextualizationForm()
-        selectform = SelectForm(request.POST)
+        selectform = SelectContextForm(request.POST)
     context = Context.objects.all()
     return render(request,'context_management.html',{
         'form':form,'selectform':selectform, 'contexts':context
     })
 
 def create_context(request,pk):
-
     subcategory_list=Subcategory.objects.all()
     priority_list=["Bassa", "Media", "Alta"]
-    maturity_level_list=["Insufficiente", "Minimo", "Standard", "Avanzato"]
     context= pk
-
     return render(request, 'create_context.html', {'subcategory_list': subcategory_list, 'priority_list': priority_list, 'context':context })
 
-
 def save_contextualization(request,pk):
-
     if request.method == 'POST':
         subcategory_list = request.POST.getlist('subcategory')
         priority= request.POST.getlist('priority')
         maturitylevel=request.POST.getlist('maturity_level')
-        print(subcategory_list)
-        print(priority)
-
         maturity_level=[]
         for element in maturitylevel:
             if(len(element) > 1):
@@ -701,10 +684,7 @@ def save_contextualization(request,pk):
     context = Context.objects.all()
     return render(request, 'context_management.html', {'contexts': context})
 
-
-
 def profile_management(request,pk):
-
     if request.method == 'POST':
         form = ProfileForm(request.POST)
         fusionform=FusionForm(request.POST)
@@ -723,99 +703,80 @@ def profile_management(request,pk):
     })
 
 def create_profile(request,pk):
-
     profile=Profile.objects.get(pk=pk)
     context= profile.context_id
-    subcategory_list=(Contextualization.objects.filter(context=context)).values()
-
-    subcategories=[]
-    for subcategory in subcategory_list:
+    subcategory_in_context=(Contextualization.objects.filter(context=context)).values()
+    subcategory_dict=[]
+    for subcategory in subcategory_in_context:
         temp=Subcategory.objects.filter(id=subcategory['subcategory_id'])
-        subcategories.append((list(temp.values()))[0])
+        subcategory_dict.append((list(temp.values()))[0])
 
     priority_list=["Bassa", "Media", "Alta"]
+    #si devono prendere i livelli di maturita messi nella context e metterli in una lista(split ecc)
     maturity_level_list=["Insufficiente", "Minimo", "Standard", "Avanzato"]
-
     profile= pk
-    request.session['list'] = subcategories
+    request.session['list'] = subcategory_dict
 
-
-    return render(request, 'create_profile.html', {'subcategories': subcategories, 'priority_list': priority_list, 'maturity_level_list':maturity_level_list,'profile':profile })
+    return render(request, 'create_profile.html', {'subcategory_dict': subcategory_dict, 'priority_list': priority_list, 'maturity_level_list':maturity_level_list,'profile':profile })
 
 def save_profile(request,pk):
-    subcategories=request.session['list']
+    subcategory_dict=request.session['list']
     if request.method == 'POST':
         priority= request.POST.getlist('priority')
         maturitylevel=request.POST.getlist('maturity_level')
         sub_list=[]
 
-        for subcat in subcategories:
-            sub= subcat['id']
-            sub_list.append(sub)
-
+        for dict in subcategory_dict:
+            sub_id= dict['id']
+            sub_list.append(sub_id)
 
         for i,subcategory in enumerate(sub_list,start=0):
             print(subcategory)
             newprofilehassubcategory= profile_has_subcategory(profile_id=pk, subcategory_id=subcategory, priority=priority[i], maturity_level=maturitylevel[i])
             newprofilehassubcategory.save()
 
-    request.session['list']=subcategories
+    request.session['list']=subcategory_dict
     return redirect('profile_controls', pk)
 
 def profile_controls(request,pk):
-    subcategories=request.session['list']
-    sublist=[]
+    subcategory_dict=request.session['list']
+    subname_list=[]
 
     controls_list = Control.objects.all()
-    for subcategory in subcategories:
-        sublist.append(subcategory['name'])
-
-
+    for subcategory in subcategory_dict:
+        subname_list.append(subcategory['name'])
     profile=pk
-
-
-    return render(request, 'profile_controls.html', {'sublist': sublist, 'controls_list':controls_list, 'profile': profile})
+    return render(request, 'profile_controls.html', {'subname_list': subname_list, 'controls_list':controls_list, 'profile': profile})
 
 def save_profile_controls(request,pk):
-
     if request.method == 'POST':
         subcategory= request.POST.getlist('sublist')
         controls=request.POST.getlist('controls')
         sub_list=[]
         control_list=[]
 
-        for controllo in controls:
-            contro=(Control.objects.get(name=controllo)).id
-            control_list.append(contro)
+        for control in controls:
+            control_id=(Control.objects.get(name=control)).id
+            control_list.append(control_id)
         for subcat in subcategory:
-            sub= (Subcategory.objects.get(name=subcat)).id
-            sub_list.append(sub)
-
-
+            sub_id= (Subcategory.objects.get(name=subcat)).id
+            sub_list.append(sub_id)
         for i,controls in enumerate(controls,start=0):
             newprofilecontrol=profile_maturity_control(profile_id=pk, subcategory_id=sub_list[i], control_id=control_list[i])
             newprofilecontrol.save()
 
-
     profile = Profile.objects.all()
     return render(request, 'profile_management.html', {'profile': profile})
 
-
 def fusion_perform(request):
     if request.method == 'POST':
-
-        selectform = SelectForm(request.POST)
+        selectform = SelectContextForm(request.POST)
         form= ContextualizationForm(request.POST)
 
-
-
         if form.is_valid() and selectform.is_valid():
-
             context_id1 = selectform['contextualization_1'].value()
             context_id2 = selectform['contextualization_2'].value()
-
             newcontext= []
-
             contextualization1 = Contextualization.objects.filter(context=Context.objects.get(pk=context_id1))
             contextualization2 = Contextualization.objects.filter(context=Context.objects.get(pk=context_id2))
             context1 = list(contextualization1.values())
@@ -828,30 +789,24 @@ def fusion_perform(request):
             j=0
 
             while(i< len(context1) and j< len(context2)):
-
                 if context1[i]['subcategory_id'] == context2[j]['subcategory_id']:
 
                     newelement = []
                     newelement = context1[i]
 
-
                     if(context1[i]['priority'] > context2[j]['priority']):
                         newelement['priority'] = context1[i]['priority']
                     else:
                         newelement['priority'] = context2[j]['priority']
-
                     if newelement['priority'] == 3:
                         checkPriority(context1[i]['maturity_level'], context2[j]['maturity_level'])
 
-
                     temp=[]
                     newelement['maturity_level']= comparingmaturity(context1[i]['maturity_level'], context2[j]['maturity_level'], temp)
-
                     newcontext.append(newelement)
                     i = i+1
                     j= j+1
                 elif context1[i]['subcategory_id'] < context2[j]['subcategory_id']:
-
                     newelement = context1[i]
                     newcontext.append(newelement)
                     i=i+1
@@ -871,8 +826,6 @@ def fusion_perform(request):
                 j=j+1
 
             newcontext= convertToDatabase(newcontext)
-
-
             form.save()
             last_context = Context.objects.latest('id')
 
@@ -929,18 +882,15 @@ def fusion_perform(request):
         return redirect('profile_management', last_context.pk)
 
     else:
-        selectform = SelectForm(request.POST)
+        selectform = SelectContextForm(request.POST)
         form = ContextualizationForm(request.POST)
     context = Context.objects.all()
     return render(request, 'context_management.html', {'context': context, 'selectform ': selectform , 'form': form })
 
-
 def fusion_profile_perform(request):
-
     if request.method == 'POST':
         fusionform = FusionForm(request.POST)
         if fusionform.is_valid():
-
             actualprofile = fusionform['actual_profile'].value()
             officialprofile = fusionform['official_profile'].value()
             targetprofile= fusionform['target_profile'].value()
@@ -960,13 +910,11 @@ def fusion_profile_perform(request):
             controls_ufficiale = createdict(profiloufficiale, dict_ufficiale)
             controls_target = createdict(profilotarget, dict_target)
 
-            controllimancanti = []
+            missingcontrols = []
             temp= []
-
             temp = profileupgrade(controls_attuale, controls_ufficiale)
-            controllimancanti= profileupgrade(temp, controls_target)
-            print(controllimancanti)
-            request.session['list']=controllimancanti
+            missingcontrols= profileupgrade(temp, controls_target)
+            request.session['list']=missingcontrols
             return redirect('controls_missing')
     else:
         fusionform = FusionForm(request.POST)
@@ -976,32 +924,27 @@ def fusion_profile_perform(request):
     })
 
 def controls_missing(request):
-    controllimancanti =request.session['list']
-
-
+    missingcontrols =request.session['list']
     subcategory_clear_list = []
     controls_clear_list= []
 
-    for item in controllimancanti:
-        element = item['subcategory_id']
+    for control in missingcontrols:
+        element = control['subcategory_id']
         subcategory_clear_list.append((Subcategory.objects.get(pk=element)))
-        for i,element2 in enumerate(item['control_id'],start=0):
-            item['control_id'][i] = Control.objects.get(pk=element2)
-        controls_clear_list.append(item['control_id'])
+        for i,element2 in enumerate(control['control_id'],start=0):
+            control['control_id'][i] = Control.objects.get(pk=element2)
+        controls_clear_list.append(control['control_id'])
 
-    return render(request, 'controls_missing.html', {'controllimancanti': controllimancanti, 'subcategory_clear_list': subcategory_clear_list, 'controls_clear_list': controls_clear_list})
+    return render(request, 'controls_missing.html', {'missingcontrols': missingcontrols, 'subcategory_clear_list': subcategory_clear_list, 'controls_clear_list': controls_clear_list})
 
 def profile_roadmap(request, pk):
-
     if request.method == 'POST':
-
-        profile3 = profile_maturity_control.objects.filter(profile=Profile.objects.get(pk=pk))
-        profilotarget = profile3.values()
+        profile = profile_maturity_control.objects.filter(profile=Profile.objects.get(pk=pk))
+        profilotarget = profile.values()
         dict_target = {}
         controls_target = createdict(profilotarget, dict_target)
-        controllimancanti = controls_target
-
-        request.session['list'] = controllimancanti
+        missingcontrols = controls_target
+        request.session['list'] = missingcontrols
         return redirect('controls_missing')
     else:
         return redirect('profile_management')

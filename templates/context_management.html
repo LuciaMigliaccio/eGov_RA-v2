@@ -30,9 +30,7 @@
         <tbody>
             {% for context in contexts %}
                 <tr>
-
                     <td style="font-family: 'Times New Roman';font-size: larger"> {{ context.name }}</td>
-
                     <td>
                         <form method="POST" action="{% url 'profile_management' context.pk %}">
                             {% csrf_token %}
@@ -45,24 +43,21 @@
                             <button type="submit" class="btn btn-danger btn-sm">Delete context</button>
                         </form>
                     </td>
-
                 </tr>
             {% endfor %}
         </tbody>
     </table>
 
-            <h1>Contextualization fusion</h1>
-            <p style="font-family: 'Times New Roman';font-size: medium">
-            Select che contextualization you want to merge from the form below, choose a name and click the button
-            </p>
+    <h1>Contextualization fusion</h1>
+    <p style="font-family: 'Times New Roman';font-size: medium">
+    Select che contextualization you want to merge from the form below, choose a name and click the button
+    </p>
 
-             <form method="POST" action="{% url 'fusion_perform'%}">
-                 {% csrf_token %}
-                  {{ selectform.as_p }}
-                  {{ form.as_p }}
-
-
-            <button type="submit" class="btn btn-primary btn-sm">Fusion context</button>
-            </form>
+     <form method="POST" action="{% url 'fusion_perform'%}">
+         {% csrf_token %}
+          {{ selectform.as_p }}
+          {{ form.as_p }}
+     <button type="submit" class="btn btn-primary btn-sm">Fusion context</button>
+     </form>
 
 {% endblock %}

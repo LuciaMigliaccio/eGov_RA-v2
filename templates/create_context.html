@@ -9,59 +9,42 @@
     </p>
     <form method="POST" name = "formname" action="{% url 'save_contextualization' context %}">
         {% csrf_token %}
-
-     <table class="table">
+        <table class="table">
         <thead>
             <tr>
                 <th>Select</th>
                 <th>Subcategory </th>
                 <th>Priority Level</th>
                 <th>Maturity Level</th>
-
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td>
-                        {% for subcategory in subcategory_list %}
-                            <tr>
-
-                                <td><input type="checkbox" id="checbox" name="subcategory" value={{ subcategory.id}}  ></td>
-                                <td>{{ subcategory}}: {{ subcategory.description}} </td>
-                                <td>
-                                <ul>
-                                    <select name="priority" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;">
-
-                                         <option value="" selected disabled hidden>Choose here</option>
-                                        {% for value in priority_list %}
-                                        <option>{{ value}}</option>
-                                        {% endfor %}
-                                    </select>
-                                </ul>
-                                </td>
-                                <td>
-
-                                    <input name="maturity_level" id = "matlev" type="textarea" size="40" maxlength="200" />
-                                </td>
-
-
-                            </tr>
-                        {% endfor %}
-
-
-                </td>
-                <td>
-
+                    {% for subcategory in subcategory_list %}
+                        <tr>
+                            <td><input type="checkbox" id="checbox" name="subcategory" value={{ subcategory.id}}  ></td>
+                            <td>{{ subcategory}}: {{ subcategory.description}} </td>
+                            <td>
+                            <ul>
+                                <select name="priority" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;">
+                                     <option value="" selected disabled hidden>Choose here</option>
+                                    {% for value in priority_list %}
+                                    <option>{{ value}}</option>
+                                    {% endfor %}
+                                </select>
+                            </ul>
+                            </td>
+                            <td>
+                                <input name="maturity_level" id = "matlev" type="textarea" size="40" maxlength="200" />
+                            </td>
+                        </tr>
+                    {% endfor %}
                 </td>
             </tr>
         </tbody>
     </table>
-
     <button type="submit" class="btn btn-primary btn-sm">save context</button>
     </form>
-
-
-
-
-
+    
 {% endblock %}
