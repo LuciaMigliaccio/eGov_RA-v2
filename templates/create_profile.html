@@ -5,10 +5,11 @@
 
     <h1>Creation of a new profile:</h1>
     <p style="font-family: 'Times New Roman';font-size: medium">
-        Select the priority level and the maturity level for each subcategory
+        Choose a name for your profile, then select the priority level and the maturity level for each subcategory
     </p>
-    <form method="POST" name = "formname" action="{% url 'save_profile' profile %}">
+    <form method="POST" name = "formname" action="{% url 'save_profile' context %}">
         {% csrf_token %}
+        {{ form.as_p }}
     <table class="table">
         <thead>
             <tr>
@@ -22,7 +23,7 @@
                 <td>
                     {% for subcategory in subcategory_dict %}
                         <tr>
-                            <td>{{ subcategory}}: {{ subcategory.description}} </td>
+                            <td>{{ subcategory.name}}: {{ subcategory.description}} </td>
                             <td>
                             <ul>
                                 <select name="priority" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>

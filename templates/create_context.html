@@ -5,10 +5,11 @@
 
     <h1>Creation of a new contextualization:</h1>
     <p style="font-family: 'Times New Roman';font-size: medium">
-        Select the subcategories you want with their priority and maturity level
+        Choose a name for your contextualization and select the subcategories with their priority and maturity levels
     </p>
-    <form method="POST" name = "formname" action="{% url 'save_contextualization' context %}">
+    <form method="POST" name = "formname" action="{% url 'save_contextualization'%}">
         {% csrf_token %}
+        {{ form.as_p }}
         <table class="table">
         <thead>
             <tr>

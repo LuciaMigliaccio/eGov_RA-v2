@@ -15,10 +15,11 @@
             <tr>
                 <th>Subcategory </th>
                 <th>Control</th>
+                <th>Remove</th>
             </tr>
         </thead>
 
-        <tbody>
+        <tbody id="tb">
         <tr>
             <td>
                 <ul class = sub>
@@ -41,26 +42,42 @@
                  </ul>
             </td>
             <td>
-                <input type='button' class='AddNew' value='Add new item'>
+                <input type="button" class="btn btn-primary btn-sm" id= "remove" value="Remove row"  />
             </td>
+
         </tr>
         </tbody>
      </table>
-     <button type="submit" class="btn btn-primary btn-sm">save profile</button>
+     <input type="button" value="Add Row" class="btn btn-primary btn-sm" id="add" />
+
+     <button type="submit" class="btn btn-primary btn-sm">Save controls</button>
      </form>
 
+
+
+    <script src="jquery.min.js"></script>
     <script>
-        $('.AddNew').click(function(){
-        var row = $(this).closest('tr').clone();
-        row.find('input').val('');
-        $(this).closest('tr').after(row);
-        $('input[type="button"]', row).removeClass('AddNew')
-                                 .addClass('RemoveRow').val('Remove item');
+        $(document).ready(function() {
+        $("#add").click(function() {
+            var row= $('.table tbody>tr:last').clone(true).insertAfter('.table tbody>tr:last');
+          return false;
+            });
+
+
+        $("#remove").click(function(){
+            var rowCount = $('#tb tr').length;
+            if(rowCount >1)
+            {
+                $(this).closest('tr').remove();
+            }
+            else{
+                alert("you can't remove all the rows")
+            }
         });
 
-        $('table').on('click', '.RemoveRow', function(){
-        $(this).closest('tr').remove();
         });
+
     </script>
+
 
 {% endblock %}

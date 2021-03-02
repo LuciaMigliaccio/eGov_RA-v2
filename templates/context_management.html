@@ -5,14 +5,13 @@
 
     <h1>Create contextualization</h1>
     <p style="font-family: 'Times New Roman';font-size: medium">
-        This form allows you to create a new contextualization to be analyzed,
+        Click the button below to be redirected to the contextualization creation page,
         in case the contextualization in question is not already among those in the list below.
     </p>
-    <form method="POST" enctype="multipart/form-data" style="font-family: 'Times New Roman';font-size: larger">
+    <form method="POST" action="{% url 'create_context'  %}">
         {% csrf_token %}
-          {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Create</button>
-      </form>
+        <button type="submit" class="btn btn-primary btn-sm">Create</button>
+    </form>
     <h1>Contextualization available</h1>
     <p style="font-family: 'Times New Roman';font-size: medium">
         You can select the contextualization from those already created to continue with the analysis.

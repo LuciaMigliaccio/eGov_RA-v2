@@ -4,12 +4,10 @@
 
     <h1>Create profile</h1>
     <p style="font-family: 'Times New Roman';font-size: medium">
-        This form allows you to create a new profile by selecting the name and the maturity level,
-        in case the profile in question is not already among those in the list below.
+        Click the button below to start the process of creating a new profile.
     </p>
-    <form method="POST" enctype="multipart/form-data" style="font-family: 'Times New Roman';font-size: larger">
+    <form method="POST" action="{% url 'create_profile' context %}">
         {% csrf_token %}
-        {{ form.as_p }}
         <button type="submit" class="btn btn-primary">Create</button>
     </form>
     <h1>Profile available</h1>

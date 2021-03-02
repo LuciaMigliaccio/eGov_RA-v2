@@ -652,7 +652,7 @@ def context_management(request):
         if form.is_valid():
             form.save()
             last_context = Context.objects.latest('id')
-            return redirect('create_context', last_context.pk)
+            return redirect('profile_management', last_context.pk)
     else:
         form = ContextualizationForm()
         selectform = SelectContextForm(request.POST)
@@ -661,14 +661,19 @@ def context_management(request):
         'form':form,'selectform':selectform, 'contexts':context
     })
 
-def create_context(request,pk):
+def create_context(request):
     subcategory_list=Subcategory.objects.all()
+    form=ContextualizationForm(request.POST)
     priority_list=["Bassa", "Media", "Alta"]
-    context= pk
-    return render(request, 'create_context.html', {'subcategory_list': subcategory_list, 'priority_list': priority_list, 'context':context })
+    return render(request, 'create_context.html', {'form':form ,'subcategory_list': subcategory_list, 'priority_list': priority_list })
 
-def save_contextualization(request,pk):
+def save_contextualization(request):
     if request.method == 'POST':
+        form=ContextualizationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            last_context=Context.objects.latest('id')
+
         subcategory_list = request.POST.getlist('subcategory')
         priority= request.POST.getlist('priority')
         maturitylevel=request.POST.getlist('maturity_level')
@@ -678,7 +683,7 @@ def save_contextualization(request,pk):
                 maturity_level.append(element)
 
         for i,subcategory in enumerate(subcategory_list, start=0):
-            newcontextualization=Contextualization(subcategory_id=subcategory, context_id=pk, priority=priority[i], maturity_level=maturity_level[i])
+            newcontextualization=Contextualization(subcategory_id=subcategory, context_id=last_context.pk, priority=priority[i], maturity_level=maturity_level[i])
             newcontextualization.save()
 
     context = Context.objects.all()
@@ -686,28 +691,21 @@ def save_contextualization(request,pk):
 
 def profile_management(request,pk):
     if request.method == 'POST':
-        form = ProfileForm(request.POST)
         fusionform=FusionForm(request.POST)
-        if form.is_valid():
-            saved_form = form.save(commit=False)
-            saved_form.context_id = pk
-            saved_form.save()
-            last_profile = Profile.objects.latest('id')
-            return redirect('create_profile', last_profile.pk)
     else:
-        form = ProfileForm()
         fusionform=FusionForm(request.POST)
     profiles = Profile.objects.filter(context=Context.objects.get(pk=pk))
+    context=pk
     return render(request,'profile_management.html',{
-        'form':form,'profiles':profiles, 'fusionform': fusionform
+        'profiles':profiles, 'fusionform': fusionform, 'context': context
     })
 
 def create_profile(request,pk):
-    profile=Profile.objects.get(pk=pk)
-    context= profile.context_id
+    context= pk
     values_in_context=(Contextualization.objects.filter(context=context)).values()
     subcategory_dict=[]
     maturity_dict=[]
+    form= ProfileForm(request.POST)
     for value in values_in_context:
         temp=Subcategory.objects.filter(id=value['subcategory_id'])
         subcategory_dict.append((list(temp.values()))[0])
@@ -715,14 +713,20 @@ def create_profile(request,pk):
         maturity_dict.append(tempmaturity)
 
     priority_list=["Bassa", "Media", "Alta"]
-    profile= pk
     request.session['list'] = subcategory_dict
 
-    return render(request, 'create_profile.html', {'subcategory_dict': subcategory_dict, 'priority_list': priority_list, 'maturity_dict':maturity_dict,'profile':profile })
+    return render(request, 'create_profile.html', {'form':form, 'subcategory_dict': subcategory_dict, 'priority_list': priority_list, 'maturity_dict':maturity_dict,'context':context })
 
 def save_profile(request,pk):
     subcategory_dict=request.session['list']
     if request.method == 'POST':
+        form=ProfileForm(request.POST)
+        if form.is_valid():
+            saved_form = form.save(commit=False)
+            saved_form.context_id = pk
+            saved_form.save()
+            last_profile= Profile.objects.latest('id')
+
         priority= request.POST.getlist('priority')
         maturitylevel=request.POST.getlist('maturity_level')
         sub_list=[]
@@ -732,12 +736,11 @@ def save_profile(request,pk):
             sub_list.append(sub_id)
 
         for i,subcategory in enumerate(sub_list,start=0):
-            print(subcategory)
-            newprofilehassubcategory= profile_has_subcategory(profile_id=pk, subcategory_id=subcategory, priority=priority[i], maturity_level=maturitylevel[i])
+            newprofilehassubcategory= profile_has_subcategory(profile_id=last_profile.pk, subcategory_id=subcategory, priority=priority[i], maturity_level=maturitylevel[i])
             newprofilehassubcategory.save()
 
     request.session['list']=subcategory_dict
-    return redirect('profile_controls', pk)
+    return redirect('profile_controls', last_profile.pk)
 
 def profile_controls(request,pk):
     subcategory_dict=request.session['list']
@@ -765,8 +768,12 @@ def save_profile_controls(request,pk):
             newprofilecontrol=profile_maturity_control(profile_id=pk, subcategory_id=sub_list[i], control_id=control_list[i])
             newprofilecontrol.save()
 
-    profile = Profile.objects.all()
-    return render(request, 'profile_management.html', {'profile': profile})
+    profile = Profile.objects.get(pk=pk)
+    context= profile.context_id
+    profiles = Profile.objects.filter(context=context)
+    fusionform=FusionForm(request.POST)
+
+    return render(request, 'profile_management.html', {'context': context, 'profiles': profiles, 'fusionform': fusionform})
 
 def fusion_perform(request):
     if request.method == 'POST':
