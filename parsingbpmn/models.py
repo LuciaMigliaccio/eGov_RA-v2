@@ -197,7 +197,6 @@ class Contextualization(models.Model):
    context=models.ForeignKey(Context, on_delete=models.CASCADE)
    subcategory=models.ForeignKey(Subcategory, on_delete=models.CASCADE)
    priority= models.CharField(max_length=100)
-   maturity_level= models.CharField(max_length=3000)
 
 
 class Profile(models.Model):
@@ -213,11 +212,27 @@ class Profile(models.Model):
         return self.name
 
 
+class Maturity_level(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.CharField(max_length=100)
+    level=models.CharField(max_length=100)
+
+    class Meta:
+        verbose_name = "Maturity_level"
+        verbose_name_plural = "maturity_levels"
+
+    def __str__(self):
+        return self.name
+
+class contextualization_has_maturity_levels(models.Model):
+    subcategory_contextualization=models.ForeignKey(Contextualization, on_delete=models.CASCADE)
+    maturity_level=models.ForeignKey(Maturity_level,on_delete=models.CASCADE)
+
 class profile_has_subcategory(models.Model):
    profile=models.ForeignKey(Profile, on_delete=models.CASCADE)
    subcategory=models.ForeignKey(Subcategory, on_delete=models.CASCADE)
    priority= models.CharField(max_length=100)
-   maturity_level= models.CharField(max_length=3000)
+   maturity_level = models.ForeignKey(Maturity_level, on_delete=models.CASCADE, default="3")
 
 
 class profile_maturity_control(models.Model):

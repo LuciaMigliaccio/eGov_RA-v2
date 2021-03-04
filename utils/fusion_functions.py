@@ -1,4 +1,6 @@
 
+from parsingbpmn.models import contextualization_has_maturity_levels, Maturity_level
+
 def convertFromDatabase(context):
     for subcategory in context:
         if subcategory["priority"]== "Alta":
@@ -7,14 +9,21 @@ def convertFromDatabase(context):
             subcategory["priority"]=2
         if subcategory["priority"] == "Bassa":
             subcategory["priority"]=1
-    
+
+    maturity_level = []
+    subcategory_maturity=[]
     for subcategory in context:
-        subcategory["maturity_level"]= subcategory["maturity_level"].split(",")
-        subcategory["maturity_level"] = [level.replace('Insufficiente', '0') for level in subcategory["maturity_level"]]
-        subcategory["maturity_level"] = [level.replace('Minimo', '1') for level in subcategory["maturity_level"]]
-        subcategory["maturity_level"] = [level.replace('Standard', '2') for level in subcategory["maturity_level"]]
-        subcategory["maturity_level"] = [level.replace('Avanzato', '3') for level in subcategory["maturity_level"]]
+        subcategory_maturity = (contextualization_has_maturity_levels.objects.filter(subcategory_contextualization_id=subcategory['id'])).values()
+        vector_maturity = []
+        for element in subcategory_maturity:
+            maturity_level=(Maturity_level.objects.filter(id=element['maturity_level_id'])).values()
+            for level in maturity_level:
+                vector_maturity.append(str(level['level']))
+        subcategory['maturity_level'] = vector_maturity
+
+
     return context
+
 
 def convertToDatabase(context):
     for subcategory in context:
@@ -24,13 +33,16 @@ def convertToDatabase(context):
             subcategory["priority"]="Media"
         if subcategory["priority"] == 1:
             subcategory["priority"]="Bassa"
-    
+
     for subcategory in context:
-        subcategory["maturity_level"] = [level.replace('0', 'Insufficiente') for level in subcategory["maturity_level"]]
-        subcategory["maturity_level"] = [level.replace('1', 'Minimo') for level in subcategory["maturity_level"]]
-        subcategory["maturity_level"] = [level.replace('2', 'Standard') for level in subcategory["maturity_level"]]
-        subcategory["maturity_level"] = [level.replace('3', 'Avanzato') for level in subcategory["maturity_level"]]
-        subcategory["maturity_level"] = ",".join(subcategory["maturity_level"])
+        subcategory_maturity=(contextualization_has_maturity_levels.objects.filter(subcategory_contextualization=subcategory['id'])).values()
+        vector_maturity = []
+        for element in subcategory_maturity:
+            maturity_level = (Maturity_level.objects.filter(id=element['maturity_level_id'])).values()
+            for id in maturity_level:
+                vector_maturity.append(str(id['id']))
+        subcategory['maturity_level'] = vector_maturity
+
     return context
 
 def checkPriority(maturity1, maturity2):

@@ -51,6 +51,12 @@
               display: inline-block;
               font-size: 16px;
         }
+        .clickable {
+            cursor:pointer;
+        }
+        .clickable>.clickable {
+            display:none;
+        }
 
         @media (min-width: 768px) {
             .bd-placeholder-img-lg {
@@ -87,7 +93,7 @@
                 </li>
             {% endif %}
             <li class="nav-item active">
-                <a class="nav-link" href="{% url 'context_management' %}">Context management<span class="sr-only">(current)</span></a>
+                <a class="nav-link" href="{% url 'context_management' %}">CSF management<span class="sr-only">(current)</span></a>
             </li>
 
 

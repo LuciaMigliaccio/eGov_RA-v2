@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -8,7 +9,8 @@ from openpyxl.styles import Font, Border, Side
 from .forms import ProcessForm, SystemForm, ContextualizationForm, ProfileForm, FusionForm, SelectContextForm
 from .models import Process, Asset, System, Asset_has_attribute, Attribute, Asset_type, Attribute_value, \
     Threat_has_attribute, Threat_has_control, Context, Profile, Contextualization, profile_maturity_control, \
-    Subcategory, Control, profile_has_subcategory, Subcategory_is_implemented_through_control
+    Subcategory, Control, profile_has_subcategory, Subcategory_is_implemented_through_control, Category, \
+    contextualization_has_maturity_levels
 from .bpmn_python_master.bpmn_python import bpmn_diagram_rep as diagram
 from utils.fusion_functions import checkPriority, comparingmaturity, convertFromDatabase, convertToDatabase, createdict, profileupgrade
 
@@ -662,10 +664,11 @@ def context_management(request):
     })
 
 def create_context(request):
+    categories = Category.objects.all()
     subcategory_list=Subcategory.objects.all()
     form=ContextualizationForm(request.POST)
     priority_list=["Bassa", "Media", "Alta"]
-    return render(request, 'create_context.html', {'form':form ,'subcategory_list': subcategory_list, 'priority_list': priority_list })
+    return render(request, 'create_context.html', {'form':form ,'categories': categories, 'subcategory_list': subcategory_list, 'priority_list': priority_list })
 
 def save_contextualization(request):
     if request.method == 'POST':
@@ -674,7 +677,11 @@ def save_contextualization(request):
             form.save()
             last_context=Context.objects.latest('id')
 
-        subcategory_list = request.POST.getlist('subcategory')
+        subcategory_notclean = request.POST.getlist('subcategory')
+        subcategory_list=[]
+        for id in subcategory_notclean:
+            subcategory_list.append(int(re.search(r'\d+', id).group()))
+
         priority= request.POST.getlist('priority')
         maturitylevel=request.POST.getlist('maturity_level')
         maturity_level=[]
@@ -686,8 +693,9 @@ def save_contextualization(request):
             newcontextualization=Contextualization(subcategory_id=subcategory, context_id=last_context.pk, priority=priority[i], maturity_level=maturity_level[i])
             newcontextualization.save()
 
+    fusionform=FusionForm(request.POST)
     context = Context.objects.all()
-    return render(request, 'context_management.html', {'contexts': context})
+    return render(request, 'context_management.html', {'contexts': context, 'form': fusionform})
 
 def profile_management(request,pk):
     if request.method == 'POST':
@@ -790,8 +798,8 @@ def fusion_perform(request):
             context2= list(contextualization2.values())
 
             context1= convertFromDatabase(context1)
-            context2= convertFromDatabase(context2)
 
+            context2= convertFromDatabase(context2)
             i=0
             j=0
 
@@ -837,28 +845,39 @@ def fusion_perform(request):
             last_context = Context.objects.latest('id')
 
             for item in newcontext:
-                newcontextualization = Contextualization(context_id=last_context.pk, subcategory_id=item['subcategory_id'], priority= item['priority'], maturity_level= item['maturity_level'])
+                newcontextualization = Contextualization(context_id=last_context.pk, subcategory_id=item['subcategory_id'], priority= item['priority'])
                 newcontextualization.save()
 
-            minprofile= Profile(context_id=last_context.pk, level= "minimo", name= "Profilo minimo " + last_context.name)
+            lista_id=[]
+            newmaturity= (Contextualization.objects.filter(context_id=last_context.pk)).values()
+            for element in newmaturity:
+                lista_id.append(element['id'])
+
+            for i,item in enumerate(newcontext,start=0):
+                for level in item['maturity_level']:
+                    newcontexthasmaturity=contextualization_has_maturity_levels(subcategory_contextualization_id=lista_id[i], maturity_level_id=level)
+                    newcontexthasmaturity.save()
+            
+            minprofile= Profile(context_id=last_context.pk, level= "Minimo", name= "Profilo minimo " + last_context.name)
             minprofile.save()
 
-            stdprofile = Profile(context_id=last_context.pk, level="standard", name="Profilo standard " + last_context.name)
+            stdprofile = Profile(context_id=last_context.pk, level="Standard", name="Profilo standard " + last_context.name)
             stdprofile.save()
 
-            avzprofile = Profile(context_id=last_context.pk, level="avanzato", name="Profilo avanzato " + last_context.name)
+            avzprofile = Profile(context_id=last_context.pk, level="Avanzato", name="Profilo avanzato " + last_context.name)
             avzprofile.save()
 
             for item in newcontext:
-                minprofilesubcategory = profile_has_subcategory(profile_id= minprofile.pk, subcategory_id=item['subcategory_id'], priority=item['priority'], maturity_level= "minimo")
+                minprofilesubcategory = profile_has_subcategory(profile_id= minprofile.pk, subcategory_id=item['subcategory_id'], priority=item['priority'], maturity_level_id= 3)
                 minprofilesubcategory.save()
 
+
             for item in newcontext:
-                stdprofilesubcategory = profile_has_subcategory(profile_id= stdprofile.pk, subcategory_id=item['subcategory_id'], priority=item['priority'], maturity_level= "standard")
+                stdprofilesubcategory = profile_has_subcategory(profile_id= stdprofile.pk, subcategory_id=item['subcategory_id'], priority=item['priority'], maturity_level_id= 4)
                 stdprofilesubcategory.save()
 
             for item in newcontext:
-                avzprofilesubcategory = profile_has_subcategory(profile_id= avzprofile.pk, subcategory_id=item['subcategory_id'], priority=item['priority'], maturity_level= "avanzato")
+                avzprofilesubcategory = profile_has_subcategory(profile_id= avzprofile.pk, subcategory_id=item['subcategory_id'], priority=item['priority'], maturity_level_id= 5)
                 avzprofilesubcategory.save()
 
             ids_controlliminimi = list((Control.objects.filter(maturity_level="minimo")).values())
