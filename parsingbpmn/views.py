@@ -1,5 +1,5 @@
 from datetime import datetime
-import re
+import re,ast
 
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -10,7 +10,7 @@ from .forms import ProcessForm, SystemForm, ContextualizationForm, ProfileForm, 
 from .models import Process, Asset, System, Asset_has_attribute, Attribute, Asset_type, Attribute_value, \
     Threat_has_attribute, Threat_has_control, Context, Profile, Contextualization, profile_maturity_control, \
     Subcategory, Control, profile_has_subcategory, Subcategory_is_implemented_through_control, Category, \
-    contextualization_has_maturity_levels, Maturity_level
+    contextualization_has_maturity_levels, Maturity_level, Fusioncontext_has_context
 from .bpmn_python_master.bpmn_python import bpmn_diagram_rep as diagram
 from utils.fusion_functions import checkPriority, comparingmaturity, convertFromDatabase, convertToDatabase, createdict, profileupgrade
 
@@ -687,7 +687,6 @@ def save_contextualization(request):
         maturitydescription = request.POST.getlist('description')
         maturitylevel = request.POST.getlist('levelist')
 
-
         maturity_level = []
 
         for i, item in enumerate(maturityname, start=0):
@@ -695,24 +694,17 @@ def save_contextualization(request):
             maturity_level.append(dict)
 
         for i,level in enumerate(maturity_level,start=0):
-            newmaturitylevels=Maturity_level(name=level['name'], description=level['description'], level=level['level'])
+            newmaturitylevels=Maturity_level(name=level['name'], description=level['description'], level=level['level'], context_id=last_context.pk)
             newmaturitylevels.save()
 
-        last_n=Maturity_level.objects.all().order_by('-id')[:(len(maturitylevel))]
-        maturity_id=[]
-        for element in last_n.values():
-            maturity_id.append(element['id'])
-
-        lengthmat=len(maturity_id)-1
-
+        maturity_id = (Maturity_level.objects.filter(context_id=last_context.pk)).values()
 
         for i,subcategory in enumerate(subcategory_list, start=0):
             newcontextualization=Contextualization(subcategory_id=subcategory, context_id=last_context.pk, priority=priority[i])
             newcontextualization.save()
             for j,item in enumerate(maturity_id, start=0):
-                newcontextualizationmaturity=contextualization_has_maturity_levels(maturity_level_id=maturity_id[lengthmat-j], subcategory_contextualization_id=(Contextualization.objects.latest('id')).pk)
+                newcontextualizationmaturity=contextualization_has_maturity_levels(maturity_level_id=item['id'], subcategory_contextualization_id=(Contextualization.objects.latest('id')).pk)
                 newcontextualizationmaturity.save()
-
 
     fusionform=FusionForm(request.POST)
     context = Context.objects.all()
@@ -733,17 +725,22 @@ def create_profile(request,pk):
     context= pk
     values_in_context=(Contextualization.objects.filter(context=context)).values()
     subcategory_dict=[]
+    maturity_levels=[]
     maturity_dict=[]
     form= ProfileForm(request.POST)
     for value in values_in_context:
         temp=Subcategory.objects.filter(id=value['subcategory_id'])
         subcategory_dict.append((list(temp.values()))[0])
-        tempmaturity=(value['maturity_level']).split(",")
-        maturity_dict.append(tempmaturity)
+        maturity_levels=list((contextualization_has_maturity_levels.objects.filter(subcategory_contextualization_id=value['id']).values()))
+        maturitytemp=[]
+        for item in maturity_levels:
+            indexmat=item['maturity_level_id']
+            temp=list((Maturity_level.objects.filter(id=indexmat)).values())
+            maturitytemp.append(temp[0])
+        maturity_dict.append(maturitytemp)
 
     priority_list=["Bassa", "Media", "Alta"]
     request.session['list'] = subcategory_dict
-
     return render(request, 'create_profile.html', {'form':form, 'subcategory_dict': subcategory_dict, 'priority_list': priority_list, 'maturity_dict':maturity_dict,'context':context })
 
 def save_profile(request,pk):
@@ -757,15 +754,19 @@ def save_profile(request,pk):
             last_profile= Profile.objects.latest('id')
 
         priority= request.POST.getlist('priority')
-        maturitylevel=request.POST.getlist('maturity_level')
-        sub_list=[]
+        matlev=request.POST.getlist('maturity_level')
+        matid=[]
+        for string in matlev:
+            splitted=string.split(",")
+            matid.append(splitted[0])
 
+        sub_list=[]
         for dict in subcategory_dict:
             sub_id= dict['id']
             sub_list.append(sub_id)
 
         for i,subcategory in enumerate(sub_list,start=0):
-            newprofilehassubcategory= profile_has_subcategory(profile_id=last_profile.pk, subcategory_id=subcategory, priority=priority[i], maturity_level=maturitylevel[i])
+            newprofilehassubcategory= profile_has_subcategory(profile_id=last_profile.pk, subcategory_id=subcategory, priority=priority[i], maturity_level_id=matid[i])
             newprofilehassubcategory.save()
 
     request.session['list']=subcategory_dict
@@ -819,7 +820,6 @@ def fusion_perform(request):
             context2= list(contextualization2.values())
 
             context1= convertFromDatabase(context1)
-
             context2= convertFromDatabase(context2)
             i=0
             j=0
@@ -892,7 +892,6 @@ def fusion_perform(request):
                 minprofilesubcategory = profile_has_subcategory(profile_id= minprofile.pk, subcategory_id=item['subcategory_id'], priority=item['priority'], maturity_level_id= 3)
                 minprofilesubcategory.save()
 
-
             for item in newcontext:
                 stdprofilesubcategory = profile_has_subcategory(profile_id= stdprofile.pk, subcategory_id=item['subcategory_id'], priority=item['priority'], maturity_level_id= 4)
                 stdprofilesubcategory.save()
@@ -925,6 +924,11 @@ def fusion_perform(request):
                     if temp:
                         avzprofilecontrols= profile_maturity_control(profile_id=avzprofile.pk, subcategory_id=temp[0]['subcategory_id'], control_id= temp[0]['control_id'])
                         avzprofilecontrols.save()
+
+            newfusioncontext=Fusioncontext_has_context(context_id=context_id1, fusion_context_id=last_context.pk)
+            newfusioncontext.save()
+            newfusioncontext2=Fusioncontext_has_context(context_id=context_id2, fusion_context_id=last_context.pk)
+            newfusioncontext2.save()
 
         return redirect('profile_management', last_context.pk)
 

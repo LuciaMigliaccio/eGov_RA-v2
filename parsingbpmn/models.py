@@ -216,6 +216,7 @@ class Maturity_level(models.Model):
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=100)
     level=models.CharField(max_length=100)
+    context=models.ForeignKey(Context,on_delete=models.CASCADE, default=1)
 
     class Meta:
         verbose_name = "Maturity_level"
