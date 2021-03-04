@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Process, System, Context, Fusioncontext_has_context, Profile
+from .models import Process, System, Context, Profile, Maturity_level
 
 
 class SystemForm(forms.ModelForm):
@@ -33,6 +33,7 @@ class FusionForm(forms.Form):
 class SelectContextForm(forms.Form):
     contextualization_1= forms.ModelChoiceField(queryset=Context.objects.all(), empty_label="Select contextualization 1")
     contextualization_2= forms.ModelChoiceField(queryset=Context.objects.all(), empty_label="Select contextualization 2")
+
 
 
 

@@ -4,13 +4,60 @@
 {% block content %}
 
     <h1>Creation of a new contextualization:</h1>
+
     <p style="font-family: 'Times New Roman';font-size: medium">
-        Choose a name for your contextualization and select the subcategories with their priority and maturity levels
+        Choose a name for your contextualization
     </p>
     <form method="POST" name = "formname" action="{% url 'save_contextualization'%}">
         {% csrf_token %}
         {{ form.as_p }}
 
+         <p style="font-family: 'Times New Roman';font-size: medium">
+            Choose the default maturity levels for your contextualization (you can edit everyone of them for each subcategory if you want)
+         </p>
+
+            <table class="table" id="tableform">
+            <thead>
+                <tr>
+                    <th>Level Name</th>
+                    <th>Level Description</th>
+                    <th>Level</th>
+                    <th>Remove</th>
+                </tr>
+            </thead>
+
+            <tbody id="tb">
+            <tr>
+                <td>
+                    <input name="namemat" id = "matname" type="textarea" size="40" maxlength="200" />
+                </td>
+                <td>
+                    <input name="description" id = "matdesc" type="textarea" size="40" maxlength="2000" />
+                </td>
+                <td>
+                    <ul class = sub>
+                        <select name="levelist" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
+                            <option value="" selected disabled hidden>Choose here</option>
+                            <option>{{0}}</option>
+                            <option>{{1}}</option>
+                            <option>{{2}}</option>
+                            <option>{{3}}</option>
+                        </select>
+                    </ul>
+                </td>
+
+                <td>
+                    <input type="button" class="btn btn-primary btn-sm" id= "remove" value="Remove row"  />
+                </td>
+
+            </tr>
+            </tbody>
+            </table>
+            <input type="button" value="Add Row" class="btn btn-primary btn-sm" id="add" />
+
+        <p style="font-family: 'Times New Roman';font-size: medium">
+        Select the subcategories with their priority
+        </p>
                 {% for category in categories %}
                 <p>
                     <b>Function:</b> {{ category.function }}<br>
@@ -18,13 +65,12 @@
                     <b>Category Description:</b>{{ category.description }}<br>
                     <input type='button' onclick="toggle_visibility('{{ category.id }}')" value='show or hide'>
                 </p>
-                            <table class="table" id="{{ category.id }}">
+                            <table class= table id="{{ category.id }}">
                             <thead>
                                 <tr>
                                     <th>Select</th>
                                     <th>Subcategory </th>
-                                    <th>priority level</th>
-                                    <th>maturity level</th>
+                                    <th>Priority level</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -45,9 +91,6 @@
                                             {% endfor %}
                                         </select>
                                     </td>
-                                    <td>
-                                        <input name="maturity_level" id = "matlev" type="textarea" size="40" maxlength="200" />
-                                    </td>
 
                                 </tr>
                             {% endif %}
@@ -55,21 +98,40 @@
                             </tr>
                             </tbody>
                             </table>
-
-
-
             {% endfor %}
 
     <button type="submit" class="btn btn-primary btn-sm">save context</button>
     </form>
 
-
     <script>
         toggle_visibility = function (id){
-
             var e = $("#"+id);
             e.toggle();
             }
+    </script>
+
+
+    <script>
+       $(document).ready(function() {
+        $("#add").click(function() {
+            var row= $('#tableform tbody>tr:last').clone(true).insertAfter('#tableform tbody>tr:last');
+          return false;
+            });
+
+
+        $("#remove").click(function(){
+            var rowCount = $('#tb tr').length;
+            if(rowCount >1)
+            {
+                $(this).closest('tr').remove();
+            }
+            else{
+                alert("you can't remove all the rows")
+            }
+        });
+
+        });
+
     </script>
 
 

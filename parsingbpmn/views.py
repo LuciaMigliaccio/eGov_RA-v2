@@ -10,7 +10,7 @@ from .forms import ProcessForm, SystemForm, ContextualizationForm, ProfileForm, 
 from .models import Process, Asset, System, Asset_has_attribute, Attribute, Asset_type, Attribute_value, \
     Threat_has_attribute, Threat_has_control, Context, Profile, Contextualization, profile_maturity_control, \
     Subcategory, Control, profile_has_subcategory, Subcategory_is_implemented_through_control, Category, \
-    contextualization_has_maturity_levels
+    contextualization_has_maturity_levels, Maturity_level
 from .bpmn_python_master.bpmn_python import bpmn_diagram_rep as diagram
 from utils.fusion_functions import checkPriority, comparingmaturity, convertFromDatabase, convertToDatabase, createdict, profileupgrade
 
@@ -668,7 +668,7 @@ def create_context(request):
     subcategory_list=Subcategory.objects.all()
     form=ContextualizationForm(request.POST)
     priority_list=["Bassa", "Media", "Alta"]
-    return render(request, 'create_context.html', {'form':form ,'categories': categories, 'subcategory_list': subcategory_list, 'priority_list': priority_list })
+    return render(request, 'create_context.html', {'form':form,'categories': categories, 'subcategory_list': subcategory_list, 'priority_list': priority_list, })
 
 def save_contextualization(request):
     if request.method == 'POST':
@@ -683,15 +683,36 @@ def save_contextualization(request):
             subcategory_list.append(int(re.search(r'\d+', id).group()))
 
         priority= request.POST.getlist('priority')
-        maturitylevel=request.POST.getlist('maturity_level')
-        maturity_level=[]
-        for element in maturitylevel:
-            if(len(element) > 1):
-                maturity_level.append(element)
+        maturityname = request.POST.getlist('namemat')
+        maturitydescription = request.POST.getlist('description')
+        maturitylevel = request.POST.getlist('levelist')
+
+
+        maturity_level = []
+
+        for i, item in enumerate(maturityname, start=0):
+            dict = {'name': item, 'description': maturitydescription[i], 'level': maturitylevel[i]}
+            maturity_level.append(dict)
+
+        for i,level in enumerate(maturity_level,start=0):
+            newmaturitylevels=Maturity_level(name=level['name'], description=level['description'], level=level['level'])
+            newmaturitylevels.save()
+
+        last_n=Maturity_level.objects.all().order_by('-id')[:(len(maturitylevel))]
+        maturity_id=[]
+        for element in last_n.values():
+            maturity_id.append(element['id'])
+
+        lengthmat=len(maturity_id)-1
+
 
         for i,subcategory in enumerate(subcategory_list, start=0):
-            newcontextualization=Contextualization(subcategory_id=subcategory, context_id=last_context.pk, priority=priority[i], maturity_level=maturity_level[i])
+            newcontextualization=Contextualization(subcategory_id=subcategory, context_id=last_context.pk, priority=priority[i])
             newcontextualization.save()
+            for j,item in enumerate(maturity_id, start=0):
+                newcontextualizationmaturity=contextualization_has_maturity_levels(maturity_level_id=maturity_id[lengthmat-j], subcategory_contextualization_id=(Contextualization.objects.latest('id')).pk)
+                newcontextualizationmaturity.save()
+
 
     fusionform=FusionForm(request.POST)
     context = Context.objects.all()
