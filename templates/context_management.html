@@ -12,6 +12,31 @@
         {% csrf_token %}
         <button type="submit" class="btn btn-primary btn-sm">Create</button>
     </form>
+    <h1>Upload contextualization</h1>
+    <p style="font-family: 'Times New Roman';font-size: medium">
+        You can upload your contextualization:
+        <li>Download the contextualization sample</li>
+        <li>Fill the sample</li>
+        <li>Upload the contextualization</li>
+    </p>
+    <form method="POST" action="{% url 'down_context_sample'  %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary btn-sm">Download sample</button>
+    </form>
+
+    <form action="{% url "read_context_file" %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file"
+                   title="Upload excel file"
+                   name="excel_file"
+                   style="border: 1px solid black; padding: 5px;"
+                   required="required">
+            <p>
+            <input type="submit"
+                   value="Upload"
+                   class="btn btn-primary btn-sm">
+    </form>
+
     <h1>Contextualization available</h1>
     <p style="font-family: 'Times New Roman';font-size: medium">
         You can select the contextualization from those already created to continue with the analysis.

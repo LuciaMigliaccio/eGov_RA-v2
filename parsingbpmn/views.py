@@ -1,5 +1,5 @@
 from datetime import datetime
-import re,ast
+import re, openpyxl
 
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -1012,3 +1012,59 @@ def delete_profile(request,pk):
         context_id = profile.context.pk
         profile.delete()
     return redirect('profile_management', context_id)
+
+def down_context_sample(request):
+    with open('utils/Contestualizzazione_sample.xlsx', 'rb') as model_excel:
+        result = model_excel.read()
+    response = HttpResponse(result)
+    response['Content-Disposition'] = 'attachment; filename=Contestualizzazione_sample.xlsx'
+    return response
+
+def read_context_file(request):
+    if "GET" == request.method:
+        return render(request, 'context_management.html')
+    else:
+        excel_file= request.FILES["excel_file"]
+        wb=openpyxl.load_workbook(excel_file)
+        worksheet=wb["Sheet1"]
+
+        loadedcontext=Context(name="User Context")
+        loadedcontext.save()
+
+        last_context=(Context.objects.latest('id')).pk
+
+        for i,row in enumerate(worksheet.iter_rows(),start=0):
+            for cell in row:
+                if cell.value == "X":
+                    prioritylevel = row[4].value
+                    subcategoryid = i
+                    newcontextualization = Contextualization(priority=prioritylevel, subcategory_id=subcategoryid, context_id=last_context)
+                    newcontextualization.save()
+                    maturitylevelsraw= row[5].value
+                    levels=maturitylevelsraw.split("\n")
+                    for level in levels:
+                        singlelevel=level.split(":")
+                        print(singlelevel)
+                        condition=False
+                        listmaturity=Maturity_level.objects.all()
+                        for element in listmaturity:
+                            if(singlelevel[0] == element.name):
+                                if(singlelevel[1]== element.description):
+                                    if(singlelevel[2]== element.level):
+                                        if(last_context==element.context_id):
+                                            maturityid=element.id
+                                            condition=True
+
+                        if(condition== False):
+                            newmaturitylevel=Maturity_level(name=singlelevel[0], description=singlelevel[1], level=singlelevel[2], context_id=last_context)
+                            newmaturitylevel.save()
+                            maturityid=(Maturity_level.objects.latest('id')).pk
+                        contextualization_id = Contextualization.objects.latest('id')
+                        newcontextmaturity = contextualization_has_maturity_levels(maturity_level_id=maturityid,subcategory_contextualization_id=contextualization_id.pk)
+                        newcontextmaturity.save()
+        return redirect('profile_management', last_context)
+
+
+
+
+
