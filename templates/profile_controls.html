@@ -9,60 +9,147 @@
     </p>
     <form method="POST" name = "formname" action="{% url 'save_profile_controls' profile %}">
         {% csrf_token %}
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-     <table class="table">
+        <table class="table">
         <thead>
             <tr>
                 <th>Subcategory </th>
+                <th>Choose</th>
                 <th>Control</th>
-                <th>Remove</th>
             </tr>
         </thead>
 
-        <tbody id="tb">
-        <tr>
-            <td>
-                <ul class = sub>
-                    <select name="sublist" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
-                         <option value="" selected disabled hidden>Choose here</option>
-                        {% for value in subname_list %}
-                        <option>{{ value}}</option>
-                        {% endfor %}
-                    </select>
-                </ul>
-            </td>
-            <td>
-                <ul class = control>
-                    <select name="controls" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
-                         <option value="" selected disabled hidden>Choose here</option>
-                        {% for value in controls_list %}
-                        <option>{{ value}}</option>
-                        {% endfor %}
-                    </select>
-                 </ul>
-            </td>
-            <td>
-                <input type="button" class="btn btn-primary btn-sm" id= "remove" value="Remove row"  />
-            </td>
+        <tbody>
+            <tr>
+                <td>
+                    {% for subcategory in subcategory_dict %}
+                        <tr>
+                            <td>{{ subcategory.name}}: {{ subcategory.description}} </td>
+                            <td>
+                                <a href=# data-target="#my_modal" data-toggle="modal" data-id="1" onclick="$('.main-modal').show();">Choose Controls</a>
+                            </td>
+                            <td>
+                                <input type="text" id="controltext" name="controls">
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </td>
+            </tr>
+
 
         </tr>
         </tbody>
      </table>
-     <input type="button" value="Add Row" class="btn btn-primary btn-sm" id="add" />
-
      <button type="submit" class="btn btn-primary btn-sm">Save controls</button>
-     </form>
+    </form>
 
 
+<div class="main-modal">
+<div class="modal fade" id="my_modal" tabindex="-1" role="dialog" aria-labelledby="my_modalLabel">
+<div class="modal-dialog modal-lg" style="width:100%" role="dialog">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4 class="modal-title" id="myModalLabel">Choose controls</h4>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Standard</th>
+                        <th>Family</th>
+                        <th>Control</th>
+                        <th>Remove</th>
+                    </tr>
+                </thead>
 
-    <script src="jquery.min.js"></script>
+                <tbody id="tb">
+                <tr>
+                    <td>
+                        <select id="standard" name="stdlist" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
+                            <option value="" selected disabled hidden>Choose here</option>
+                            {% for value in standard_list %}
+                            <option class="{{ value.id }}">{{ value}}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <select  id="family" name="famlist" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
+                            <option value="" selected disabled hidden>Choose here</option>
+                            {% for value in family_list %}
+                            <option id="{{ value.id }}" class="{{ value.framework_id_id }}">{{ value}}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <select id="contr" name="controls" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
+                             <option value="" selected disabled hidden>Choose here</option>
+                            {% for value in controls_list %}
+                            <option id="{{ value.family_id }}">{{ value}}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <input type="button" class="btn btn-primary btn-sm" id= "remove" value="Remove row"  />
+                    </td>
+
+                </tr>
+                </tbody>
+            </table>
+     <input type="button" value="Add Row" class="btn btn-primary btn-sm" id="add" />
+        </div>
+        <div class="modal-footer">
+            <button id="close-modal" type="button" class="btn btn-default" data-dismiss="modal">Copy controls</button>
+        </div>
+    </div>
+</div>
+</div>
+
+    <script>
+        $(document).ready(function () {
+            var text= document.getElementById('controltext')
+            $('#contr').change(function(){
+                var controlselected = $('#contr option').filter(':selected');
+            $('#close-modal').click(function()
+              {
+                  text.value= text.value + controlselected.text() + ";"
+              });
+            });
+          });
+    </script>
+
+    <script>
+        $(document).ready(function () {
+        var allOptions = $('#family option')
+        $('#standard').change(function () {
+        $('#family option').remove()
+        var classN = $('#standard option:selected').prop('class');
+        var opts = allOptions.filter('.' + classN);
+        $.each(opts, function (i, j) {
+            $(j).appendTo('#family');
+        });
+        });
+
+         var controlOptions = $('#contr option')
+            $('#family').change(function()
+            {
+                $('#contr option').remove()
+                var classC= $('#family option:selected').prop('id');
+                var optC =controlOptions.filter('#' + classC);
+                $.each(optC, function(i,j)
+                {
+                    $(j).appendTo('#contr');
+                });
+            });
+         });
+
+    </script>
+
     <script>
         $(document).ready(function() {
         $("#add").click(function() {
             var row= $('.table tbody>tr:last').clone(true).insertAfter('.table tbody>tr:last');
           return false;
             });
-
 
         $("#remove").click(function(){
             var rowCount = $('#tb tr').length;

@@ -24,6 +24,7 @@
         <button type="submit" class="btn btn-primary btn-sm">Download sample</button>
     </form>
 
+    <br>
     <form action="{% url "read_context_file" %}" method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="file"
@@ -31,7 +32,6 @@
                    name="excel_file"
                    style="border: 1px solid black; padding: 5px;"
                    required="required">
-            <p>
             <input type="submit"
                    value="Upload"
                    class="btn btn-primary btn-sm">

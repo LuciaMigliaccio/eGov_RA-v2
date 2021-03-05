@@ -10,7 +10,7 @@ from .forms import ProcessForm, SystemForm, ContextualizationForm, ProfileForm, 
 from .models import Process, Asset, System, Asset_has_attribute, Attribute, Asset_type, Attribute_value, \
     Threat_has_attribute, Threat_has_control, Context, Profile, Contextualization, profile_maturity_control, \
     Subcategory, Control, profile_has_subcategory, Subcategory_is_implemented_through_control, Category, \
-    contextualization_has_maturity_levels, Maturity_level, Fusioncontext_has_context
+    contextualization_has_maturity_levels, Maturity_level, Fusioncontext_has_context, Family, control_framework
 from .bpmn_python_master.bpmn_python import bpmn_diagram_rep as diagram
 from utils.fusion_functions import checkPriority, comparingmaturity, convertFromDatabase, convertToDatabase, createdict, profileupgrade
 
@@ -750,7 +750,7 @@ def save_profile(request,pk):
         if form.is_valid():
             saved_form = form.save(commit=False)
             saved_form.context_id = pk
-            saved_form.save()
+            #saved_form.save()
             last_profile= Profile.objects.latest('id')
 
         priority= request.POST.getlist('priority')
@@ -767,19 +767,18 @@ def save_profile(request,pk):
 
         for i,subcategory in enumerate(sub_list,start=0):
             newprofilehassubcategory= profile_has_subcategory(profile_id=last_profile.pk, subcategory_id=subcategory, priority=priority[i], maturity_level_id=matid[i])
-            newprofilehassubcategory.save()
+            #newprofilehassubcategory.save()
 
     request.session['list']=subcategory_dict
     return redirect('profile_controls', last_profile.pk)
 
 def profile_controls(request,pk):
     subcategory_dict=request.session['list']
-    subname_list=[]
     controls_list = Control.objects.all()
-    for subcategory in subcategory_dict:
-        subname_list.append(subcategory['name'])
+    standard_list= control_framework.objects.all()
+    family_list=Family.objects.all()
     profile=pk
-    return render(request, 'profile_controls.html', {'subname_list': subname_list, 'controls_list':controls_list, 'profile': profile})
+    return render(request, 'profile_controls.html', {'subcategory_dict': subcategory_dict, 'controls_list':controls_list,'standard_list':standard_list, 'family_list':family_list, 'profile': profile})
 
 def save_profile_controls(request,pk):
     if request.method == 'POST':
@@ -796,7 +795,7 @@ def save_profile_controls(request,pk):
             sub_list.append(sub_id)
         for i,controls in enumerate(controls,start=0):
             newprofilecontrol=profile_maturity_control(profile_id=pk, subcategory_id=sub_list[i], control_id=control_list[i])
-            newprofilecontrol.save()
+            #newprofilecontrol.save()
 
     profile = Profile.objects.get(pk=pk)
     context= profile.context_id
@@ -1044,7 +1043,6 @@ def read_context_file(request):
                     levels=maturitylevelsraw.split("\n")
                     for level in levels:
                         singlelevel=level.split(":")
-                        print(singlelevel)
                         condition=False
                         listmaturity=Maturity_level.objects.all()
                         for element in listmaturity:

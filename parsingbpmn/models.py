@@ -96,14 +96,25 @@ class Attribute(models.Model):
     def __str__(self):
         return self.attribute_name
 
-class Family(models.Model):
+class control_framework(models.Model):
     name = models.CharField(max_length=100)
-    description = models.CharField(max_length=500)
-    source = models.CharField(max_length=500)
+    version = models.CharField(max_length=500)
 
     class Meta:
         verbose_name = "Subcategory"
         verbose_name_plural = "Subcategories"
+
+    def __str__(self):
+        return self.name
+
+class Family(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.CharField(max_length=500)
+    framework_id=models.ForeignKey(control_framework,on_delete=models.CASCADE, default=1)
+
+    class Meta:
+        verbose_name = "Family"
+        verbose_name_plural = "Families"
 
     def __str__(self):
         return self.name
