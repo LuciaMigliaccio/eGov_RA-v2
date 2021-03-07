@@ -750,7 +750,7 @@ def save_profile(request,pk):
         if form.is_valid():
             saved_form = form.save(commit=False)
             saved_form.context_id = pk
-            #saved_form.save()
+            saved_form.save()
             last_profile= Profile.objects.latest('id')
 
         priority= request.POST.getlist('priority')
@@ -767,7 +767,7 @@ def save_profile(request,pk):
 
         for i,subcategory in enumerate(sub_list,start=0):
             newprofilehassubcategory= profile_has_subcategory(profile_id=last_profile.pk, subcategory_id=subcategory, priority=priority[i], maturity_level_id=matid[i])
-            #newprofilehassubcategory.save()
+            newprofilehassubcategory.save()
 
     request.session['list']=subcategory_dict
     return redirect('profile_controls', last_profile.pk)
@@ -778,24 +778,40 @@ def profile_controls(request,pk):
     standard_list= control_framework.objects.all()
     family_list=Family.objects.all()
     profile=pk
+    request.session['list'] =subcategory_dict
     return render(request, 'profile_controls.html', {'subcategory_dict': subcategory_dict, 'controls_list':controls_list,'standard_list':standard_list, 'family_list':family_list, 'profile': profile})
 
 def save_profile_controls(request,pk):
+    subcategory_dict=request.session['list']
     if request.method == 'POST':
-        subcategory= request.POST.getlist('sublist')
         controls=request.POST.getlist('controls')
         sub_list=[]
         control_list=[]
+        control_clean=[]
 
-        for control in controls:
-            control_id=(Control.objects.get(name=control)).id
-            control_list.append(control_id)
-        for subcat in subcategory:
-            sub_id= (Subcategory.objects.get(name=subcat)).id
+        i=0
+        while i<(len(controls)):
+            if (i%2) != 0:
+                temp=controls[i].split(";")
+                temp.pop()
+                control_clean.append(temp)
+            i=i+1
+
+        for controls in control_clean:
+            temp = []
+            for control in controls:
+                control_id=(Control.objects.get(name=control)).id
+                temp.append(control_id)
+            control_list.append(temp)
+
+        for subcat in subcategory_dict:
+            sub_id= subcat['id']
             sub_list.append(sub_id)
-        for i,controls in enumerate(controls,start=0):
-            newprofilecontrol=profile_maturity_control(profile_id=pk, subcategory_id=sub_list[i], control_id=control_list[i])
-            #newprofilecontrol.save()
+
+        for i,sub in enumerate(sub_list,start=0):
+            for control in control_list[i]:
+                newprofilecontrol=profile_maturity_control(profile_id=pk, subcategory_id=sub, control_id=control)
+                newprofilecontrol.save()
 
     profile = Profile.objects.get(pk=pk)
     context= profile.context_id

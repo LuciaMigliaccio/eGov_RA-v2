@@ -75,8 +75,6 @@
                                                                         {% endfor %}
                                                                     </select>
                                                                 </td>
-
-
                                                             </tr>
                                                             </tbody>
                                                         </table>
@@ -110,19 +108,14 @@
 
     <script>
         content=function(id){
-
             var prevtext = $('#text'+id).prop('value')
             var testo=  $('#contr'+id+' option').filter(':selected').text() + ";"
             var text = $('#text'+id).prop('value',prevtext + testo)
-
         }
-
     </script>
 
 
     <script>
-
-
          changestandard= function(id){
            var levelClass= $('#standard'+id).find('option:selected').attr('class');
            $('#family'+id+' option').each(function(){
@@ -136,7 +129,6 @@
         }
 
         changefamily=function(id){
-
             var levelClass= $('#family'+id).find('option:selected').prop('id');
            $('#contr'+id+' option').each(function(){
               var self= $(this);
