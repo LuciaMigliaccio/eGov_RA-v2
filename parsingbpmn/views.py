@@ -10,7 +10,8 @@ from .forms import ProcessForm, SystemForm, ContextualizationForm, ProfileForm, 
 from .models import Process, Asset, System, Asset_has_attribute, Attribute, Asset_type, Attribute_value, \
     Threat_has_attribute, Threat_has_control, Context, Profile, Contextualization, profile_maturity_control, \
     Subcategory, Control, profile_has_subcategory, Subcategory_is_implemented_through_control, Category, \
-    contextualization_has_maturity_levels, Maturity_level, Fusioncontext_has_context, Family, control_framework
+    contextualization_has_maturity_levels, Maturity_level, Fusioncontext_has_context, Family, control_framework, \
+    Threat_has_family
 from .bpmn_python_master.bpmn_python import bpmn_diagram_rep as diagram
 from utils.fusion_functions import checkPriority, comparingmaturity, convertFromDatabase, convertToDatabase, createdict, profileupgrade
 
@@ -409,8 +410,10 @@ def threats_and_controls(request,pk):
         sublist_controls = []
         for threat in threats_of_asset:
             threat = threat.threat
-            sublist_controls.append(Threat_has_control.objects.filter(threat=threat))
+            sublist_controls.append(Threat_has_family.objects.filter(threat=threat))
         controls.append(sublist_controls)
+
+    # Threat has family va cambiata in threat has control, ossia andando ad associare i threat dell'enisa con i sottocontrolli CIS
 
     clear_list_threats = []
     for threat_list in threats:
@@ -418,12 +421,14 @@ def threats_and_controls(request,pk):
             if threat.threat not in clear_list_threats:
                 clear_list_threats.append(threat.threat)
 
+
     clear_list_controls = []
     for control_of_asset in controls:
         for control_of_threat in control_of_asset:
             for control in control_of_threat:
-                if control.control not in clear_list_controls:
-                    clear_list_controls.append(control.control)
+                # dovrebbe essere control.control ma l'abbiamo adattato per le family
+                if control.family not in clear_list_controls:
+                    clear_list_controls.append(control.family)
 
     system = Process.objects.get(pk=pk).system
     processes = Process.objects.filter(system=system)
@@ -446,7 +451,8 @@ def threat_modeling(request,pk):
         sublist_controls = []
         for threat in threats_of_asset:
             threat = threat.threat
-            sublist_controls.append(Threat_has_control.objects.filter(threat=threat))
+            #qui dovrebbe essere threat has control
+            sublist_controls.append(Threat_has_family.objects.filter(threat=threat))
         controls.append(sublist_controls)
 
     controls_per_asset = []
@@ -454,9 +460,11 @@ def threat_modeling(request,pk):
         list_controls = []
         for threat in asset:
             threat = threat.threat
-            controls_per_threat = Threat_has_control.objects.filter(threat=threat)
+            # qui dovrebbe essere threat has control
+            controls_per_threat = Threat_has_family.objects.filter(threat=threat)
             for control in controls_per_threat:
-                control= control.control
+                # qui dovrebbe essere contorl.control
+                control= control.family
                 if control not in list_controls:
                     list_controls.append(control)
         controls_per_asset.append(list_controls)
@@ -993,15 +1001,21 @@ def controls_missing(request):
     missingcontrols =request.session['list']
     subcategory_clear_list = []
     controls_clear_list= []
+    framework_clear_list=[]
 
     for control in missingcontrols:
         element = control['subcategory_id']
         subcategory_clear_list.append((Subcategory.objects.get(pk=element)))
+        framework_list=[]
         for i,element2 in enumerate(control['control_id'],start=0):
             control['control_id'][i] = Control.objects.get(pk=element2)
+            family_id=(control['control_id'][i]).family_id
+            frameworkid = (Family.objects.get(pk=family_id)).framework_id
+            framework_list.append(frameworkid)
         controls_clear_list.append(control['control_id'])
+        framework_clear_list.append(framework_list)
 
-    return render(request, 'controls_missing.html', {'missingcontrols': missingcontrols, 'subcategory_clear_list': subcategory_clear_list, 'controls_clear_list': controls_clear_list})
+    return render(request, 'controls_missing.html', {'framework_clear_list': framework_clear_list, 'missingcontrols': missingcontrols, 'subcategory_clear_list': subcategory_clear_list, 'controls_clear_list': controls_clear_list})
 
 def profile_roadmap(request, pk):
     if request.method == 'POST':

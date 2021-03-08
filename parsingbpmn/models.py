@@ -144,6 +144,10 @@ class Threat_has_control(models.Model):
     threat = models.ForeignKey(Threat, on_delete=models.CASCADE)
     control = models.ForeignKey(Control, on_delete=models.CASCADE)
 
+class Threat_has_family(models.Model):
+    threat = models.ForeignKey(Threat, on_delete=models.CASCADE)
+    family = models.ForeignKey(Family, on_delete=models.CASCADE)
+
 # AL MODELLO DEI DATI MANCA SOLO LA PARTE RELATIVA AI THREAT AGENTS
 
 class Category(models.Model):

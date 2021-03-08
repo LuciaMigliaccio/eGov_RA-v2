@@ -69,7 +69,8 @@
                                                         <ol>
                                                             {% for control in controls %}
                                                                 {% if control.threat == threat.threat %}
-                                                                <li>{{ control.control }}</li>
+                                                                    <!-- qui dovrebbe essere control.control-->
+                                                                <li>{{ control.family }}</li>
                                                                 {% endif %}
                                                             {% endfor %}
                                                         </ol>
@@ -79,7 +80,8 @@
                                                         <ol>
                                                             {% for control in controls %}
                                                                 {% if control.threat == threat.threat %}
-                                                                <li>{{ control.control.description }}</li>
+                                                                    <!-- qui dovrebbe essere control.control-->
+                                                                <li>{{ control.family.description }}</li>
                                                                 {% endif %}
                                                             {% endfor %}
                                                         </ol>

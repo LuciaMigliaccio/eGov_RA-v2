@@ -24,7 +24,7 @@
                             <td>
                             <ul>
                                 {% for control in controls_clear_list|index:forloop.counter0 %}
-                                    <li>{{ control}}: {{ control.description}} </li>
+                                    <li> <b>{{ framework_clear_list|index:forloop.parentloop.counter0|index:forloop.counter0 }}:</b> {{ control}}- {{ control.description}} </li>
                                 {% endfor %}
                             </ul>
                             </td>
