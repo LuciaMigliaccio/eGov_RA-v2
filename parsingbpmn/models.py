@@ -216,8 +216,9 @@ class Contextualization(models.Model):
 
 class Profile(models.Model):
     name = models.CharField(max_length=100)
-    level = models.CharField(max_length=100, default = 'minimo')
+    level = models.CharField(max_length=100, null=True)
     context = models.ForeignKey(Context, on_delete=models.CASCADE)
+    framework=models.ForeignKey(control_framework, on_delete=models.CASCADE, null=True)
 
     class Meta:
         verbose_name = "Profile"
@@ -255,6 +256,7 @@ class profile_maturity_control(models.Model):
    profile=models.ForeignKey(Profile, on_delete=models.CASCADE, null = True)
    subcategory=models.ForeignKey(Subcategory, on_delete=models.CASCADE)
    control=models.ForeignKey(Control, on_delete=models.CASCADE)
+   implementation=models.CharField(max_length=1000, null=True)
 
 class is_a_requirement_for_mitigation(models.Model):
     threat=models.ForeignKey(Threat,on_delete=models.CASCADE)

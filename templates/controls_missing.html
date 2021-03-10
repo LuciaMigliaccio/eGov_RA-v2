@@ -13,6 +13,7 @@
             <tr>
                 <th>Subcategory </th>
                 <th>Controls</th>
+                <th>Implementation</th>
             </tr>
         </thead>
         <tbody>
@@ -28,6 +29,10 @@
                                 {% endfor %}
                             </ul>
                             </td>
+                            <td> {% for element in missingcontrols %}
+                                        <li> {{ element.implementation }}</li>
+                                    {% endfor %}
+                                </td>
                             </tr>
                     {% endfor %}
                 </td>

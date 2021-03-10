@@ -5,143 +5,53 @@
 
     <h1>Selection of controls:</h1>
     <p style="font-family: 'Times New Roman';font-size: medium">
-        Select the subcategory within the controls you have implemented for each one of them
+        Select the controls you have implemented for each subcategory and explain how you implemented it.
     </p>
-    <form method="POST" name = "formname" action="{% url 'save_profile_controls' profile %}">
+    <form method="POST" name = "formname" action="{% url 'save_profile_controls' profile %}?subcategory_and_controls={{subcategory_and_controls}}">
         {% csrf_token %}
-        <table class="table">
-        <thead>
-            <tr>
-                <th>Subcategory </th>
-                <th>Choose</th>
-                <th>Control</th>
-            </tr>
-        </thead>
+         {% for subcategory in subcategory_and_controls %}
+                <p>
+                    <b>Subcategory Name: </b>{{ subcategory.subcategory.name }}<br>
+                    <b>Subcategory Description:</b>{{ subcategory.subcategory.description }}<br>
+                    <input type='button' onclick="toggle_visibility('{{ subcategory.subcategory.id }}')" value='show or hide'>
+                </p>
+                            <table class= table id="{{ subcategory.subcategory.id }}">
+                            <thead>
+                                <tr>
+                                    <th>Select</th>
+                                    <th>Control</th>
+                                    <th>Implementation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
 
-        <tbody>
-            <tr>
-                <td>
-                    {% for subcategory in subcategory_dict %}
-                        <tr>
-                            <td>{{ subcategory.name}}: {{ subcategory.description}} </td>
-                            <td>
-                                 <a href="" style="color: black" data-toggle="modal"
-                                       data-target="#ControlChoice{{ subcategory.id }}">
-                                        Choose control for {{ subcategory.name }}
-                                    </a>
-                                    <div class="modal" tabindex="-1" id="ControlChoice{{ subcategory.id }}">
-                                        <div class="modal-dialog modal-lg" style="width:100%">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h1 class="modal-title">{{ subcategory.name }} control choice</h1>
-                                                    <button type="button" class="close" data-dismiss="modal"
-                                                            aria-label="Close">
-                                                        <span aria-hidden="true">&times;</span>
-                                                    </button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <table class="table">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>Standard</th>
-                                                                    <th>Family</th>
-                                                                    <th>Control</th>
-                                                                </tr>
-                                                            </thead>
+                            {% for control in subcategory.related_controls%}
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" id="checbox" name="controls" value={{ control.id}}/>
+                                    </td>
+                                    <td>{{ control.name}}: {{ control.description}} </td>
+                                    <td>
+                                         <input type="text" name="controls_implementation">
+                                    </td>
 
-                                                            <tbody id="tb">
-                                                            <tr>
-                                                                <td>
-                                                                    <select id="standard{{ subcategory.id }}" onchange="changestandard('{{ subcategory.id }}')"  name="stdlist" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
-                                                                        <option value="" selected disabled hidden>Choose here</option>
-                                                                        {% for value in standard_list %}
-                                                                        <option class="{{ value.id }}">{{ value}}</option>
-                                                                        {% endfor %}
-                                                                    </select>
-                                                                </td>
-                                                                <td>
-                                                                    <select  id="family{{ subcategory.id }}" onchange="changefamily('{{ subcategory.id }}')" name="famlist" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
-                                                                        <option value="" selected disabled hidden>Choose here</option>
-                                                                        {% for value in family_list %}
-                                                                        <option id="{{ value.id }}" class="{{ value.framework_id_id }}">{{ value}}</option>
-                                                                        {% endfor %}
-                                                                    </select>
-                                                                </td>
-                                                                <td>
-                                                                    <select id="contr{{ subcategory.id }}" name="controls" class="form-control" style="width: 150px !important; min-width: 150px; max-width: 150px;" required>
-                                                                         <option value="" selected disabled hidden>Choose here</option>
-                                                                        {% for value in controls_list %}
-                                                                        <option id="{{ value.family_id }}">{{ value}}</option>
-                                                                        {% endfor %}
-                                                                    </select>
-                                                                </td>
-                                                            </tr>
-                                                            </tbody>
-                                                        </table>
+                                </tr>
+                            {% endfor %}
+                            </tr>
+                            </tbody>
+                            </table>
+            {% endfor %}
 
-                                                    </div>
-                                                <div class="modal-footer">
-                                                    <input type='button' onclick="content('{{ subcategory.id }}')" value='add control'>
-                                                    <button type="button"  class="btn btn-secondary"
-                                                            data-dismiss="modal">
-                                                        Close
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                            </td>
-                            <td>
-                                <input type="text" id="text{{subcategory.id}}" name="controls">
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </td>
-            </tr>
-        </tr>
-        </tbody>
-     </table>
      <button type="submit" class="btn btn-primary btn-sm">Save controls</button>
     </form>
 
 
-
     <script>
-        content=function(id){
-            var prevtext = $('#text'+id).prop('value')
-            var testo=  $('#contr'+id+' option').filter(':selected').text() + ";"
-            var text = $('#text'+id).prop('value',prevtext + testo)
-        }
-    </script>
-
-
-    <script>
-         changestandard= function(id){
-           var levelClass= $('#standard'+id).find('option:selected').attr('class');
-           $('#family'+id+' option').each(function(){
-              var self= $(this);
-              if(self.hasClass(levelClass) || typeof(levelClass) == "undefined"){
-                  self.show();
-              }else  {
-                  self.hide();
-              }
-           });
-        }
-
-        changefamily=function(id){
-            var levelClass= $('#family'+id).find('option:selected').prop('id');
-           $('#contr'+id+' option').each(function(){
-              var self= $(this);
-
-              if(self.prop('id') == levelClass){
-                  self.show();
-              }else  {
-                  self.hide();
-              }
-           });
-        }
-
-
+        toggle_visibility = function (id){
+            var e = $("#"+id);
+            e.toggle();
+            }
     </script>
 
 

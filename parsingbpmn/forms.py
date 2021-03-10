@@ -22,7 +22,7 @@ class ContextualizationForm(forms.ModelForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model=Profile
-        fields=['name', 'level' ]
+        fields=['name', 'level', 'framework' ]
         exclude = ['context_id']
 
 class FusionForm(forms.Form):
