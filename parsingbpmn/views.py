@@ -929,53 +929,7 @@ def fusion_perform(request):
             newfusioncontext.save()
             newfusioncontext2 = Fusioncontext_has_context(context_id=context_id2, fusion_context_id=last_context.pk)
             newfusioncontext2.save()
-        """ 
-            minprofile= Profile(context_id=last_context.pk, level= "Minimo", name= "Profilo minimo " + last_context.name)
-            minprofile.save()
 
-            stdprofile = Profile(context_id=last_context.pk, level="Standard", name="Profilo standard " + last_context.name)
-            stdprofile.save()
-
-            avzprofile = Profile(context_id=last_context.pk, level="Avanzato", name="Profilo avanzato " + last_context.name)
-            avzprofile.save()
-
-            for item in newcontext:
-                minprofilesubcategory = profile_has_subcategory(profile_id= minprofile.pk, subcategory_id=item['subcategory_id'], priority=item['priority'], maturity_level_id= 3)
-                minprofilesubcategory.save()
-
-            for item in newcontext:
-                stdprofilesubcategory = profile_has_subcategory(profile_id= stdprofile.pk, subcategory_id=item['subcategory_id'], priority=item['priority'], maturity_level_id= 4)
-                stdprofilesubcategory.save()
-
-            for item in newcontext:
-                avzprofilesubcategory = profile_has_subcategory(profile_id= avzprofile.pk, subcategory_id=item['subcategory_id'], priority=item['priority'], maturity_level_id= 5)
-                avzprofilesubcategory.save()
-
-            ids_controlliminimi = list((Control.objects.filter(maturity_level="minimo")).values())
-            ids_controllistd= list((Control.objects.filter(maturity_level="standard")).values())
-            ids_controlliavz= list((Control.objects.filter(maturity_level="avanzato")).values())
-
-            for item in newcontext:
-                for control in ids_controlliminimi:
-                    temp = (Subcategory_is_implemented_through_control.objects.filter(subcategory_id=item['subcategory_id'], control_id =control['id'])).values()
-                    if temp:
-                        minprofilecontrols= profile_maturity_control(profile_id=minprofile.pk, subcategory_id=temp[0]['subcategory_id'], control_id= temp[0]['control_id'])
-                        minprofilecontrols.save()
-
-            for item in newcontext:
-                for control in ids_controllistd:
-                    temp = (Subcategory_is_implemented_through_control.objects.filter(subcategory_id=item['subcategory_id'], control_id =control['id'])).values()
-                    if temp:
-                        stdprofilecontrols= profile_maturity_control(profile_id=stdprofile.pk, subcategory_id=temp[0]['subcategory_id'], control_id= temp[0]['control_id'])
-                        stdprofilecontrols.save()
-
-            for item in newcontext:
-                for control in ids_controlliavz:
-                    temp = (Subcategory_is_implemented_through_control.objects.filter(subcategory_id=item['subcategory_id'], control_id =control['id'])).values()
-                    if temp:
-                        avzprofilecontrols= profile_maturity_control(profile_id=avzprofile.pk, subcategory_id=temp[0]['subcategory_id'], control_id= temp[0]['control_id'])
-                        avzprofilecontrols.save()
-        """
         return redirect('profile_management', last_context.pk)
 
     else:
@@ -1105,7 +1059,6 @@ def profile_roadmap(request, pk):
         return redirect('controls_missing')
     else:
         return redirect('profile_management')
-
 
 def profile_evaluation(request,pk):
     if request.method == 'POST':
@@ -1249,7 +1202,183 @@ def read_context_file(request):
                         newcontextmaturity.save()
         return redirect('profile_management', last_context)
 
+def export_context(request, pk):
+    if request.method == 'POST':
+        contextualization_queryset=Contextualization.objects.filter(context_id=pk)
 
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename={date}-{name}-context.xlsx'.format(
+            date=datetime.now().strftime('%d-%m-%Y'),
+            name=Context.objects.get(pk=pk).name.replace(" ","_")
+        )
+        workbook = Workbook()
+
+        worksheet = workbook.active
+        worksheet.title = 'Contextualization'
+        columns = ['Function', 'Category', 'Subcategory', 'Priority_level', 'Maturity_level']
+        row_num = 1
+
+        # Assign the titles for each cell of the header
+        for col_num, column_title in enumerate(columns, 1):
+            cell = worksheet.cell(row=row_num, column=col_num)
+            cell.value = column_title
+            cell.font = Font(name="Times New Roman", size=12, bold=True, color='FF0000')
+            cell.border = Border(left=Side(border_style="thin", color='FF000000'),
+                                 right=Side(border_style="thin", color='FF000000'),
+                                 top=Side(border_style="thin", color='FF000000'),
+                                 bottom=Side(border_style="thin", color='FF000000'), )
+
+
+        # Iterate through all contextualization
+
+        row_list = []
+
+        for element in contextualization_queryset.values():
+            subcategory= (Subcategory.objects.get(id=element['subcategory_id']))
+            cat_id=(Subcategory.objects.get(id=element['subcategory_id']))
+            category= (Category.objects.get(id=cat_id.category_id))
+            priority_level= element['priority']
+            contextualzation_maturity = (contextualization_has_maturity_levels.objects.filter(subcategory_contextualization_id=element['id'])).values()
+            level = []
+            for mat in contextualzation_maturity:
+                mat_id=mat['maturity_level_id']
+                temp=(Maturity_level.objects.get(id=mat_id))
+                level.append(temp.name + ": " + temp.description)
+            maturity_level= ';'.join(level)
+            row_list.append({'Function': category.function, 'Category': category, 'subcategory': subcategory, 'priority_level': priority_level, 'maturity_level': maturity_level})
+
+
+        print(row_list)
+
+        for row in row_list:
+            row_num +=1
+
+            # define data for each cell in the row
+            row = [
+                row['Function'],
+                row['Category'].name,
+                row['subcategory'].name +": " + row['subcategory'].description,
+                row['priority_level'],
+                row['maturity_level']
+
+            ]
+
+            #assign data for each cell of the row
+            for col_num, cell_value in enumerate(row, 1):
+                cell = worksheet.cell(row=row_num, column=col_num)
+                cell.value = cell_value
+                cell.font = Font(name="Times New Roman", size=11, bold=False, color='FF000000')
+                cell.border = Border(left=Side(border_style="thin", color='FF000000'),
+                                     right=Side(border_style="thin", color='FF000000'),
+                                     top=Side(border_style="thin", color='FF000000'),
+                                     bottom=Side(border_style="thin", color='FF000000'), )
+        dims = {}
+        for row in worksheet.rows:
+            for cell in row:
+
+                if cell.value:
+                    dims[cell.column_letter] = max((dims.get(cell.column_letter, 0), len(str(cell.value))))
+        for col, value in dims.items():
+            worksheet.column_dimensions[col].width = value
+
+        workbook.save(response)
+
+    return response
+
+def export_profile(request, pk):
+    if request.method == 'POST':
+        profile_queryset=profile_has_subcategory.objects.filter(profile_id=pk)
+
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename={date}-{name}-profile.xlsx'.format(
+            date=datetime.now().strftime('%d-%m-%Y'),
+            name=Profile.objects.get(pk=pk).name.replace(" ","_")
+        )
+        workbook = Workbook()
+
+        worksheet = workbook.active
+        worksheet.title = 'Profile'
+        columns = ['Function', 'Category', 'Subcategory', 'Priority_level', 'Maturity_level', 'Controls','Implementation']
+        row_num = 1
+
+        # Assign the titles for each cell of the header
+        for col_num, column_title in enumerate(columns, 1):
+            cell = worksheet.cell(row=row_num, column=col_num)
+            cell.value = column_title
+            cell.font = Font(name="Times New Roman", size=12, bold=True, color='FF0000')
+            cell.border = Border(left=Side(border_style="thin", color='FF000000'),
+                                 right=Side(border_style="thin", color='FF000000'),
+                                 top=Side(border_style="thin", color='FF000000'),
+                                 bottom=Side(border_style="thin", color='FF000000'), )
+
+
+        # Iterate
+        row_list = []
+
+        for element in profile_queryset.values():
+            subcategory= (Subcategory.objects.get(id=element['subcategory_id']))
+            cat_id=(Subcategory.objects.get(id=element['subcategory_id']))
+            category= (Category.objects.get(id=cat_id.category_id))
+            priority_level= element['priority']
+            profile_maturity= (Maturity_level.objects.get(id=element['maturity_level_id']))
+            maturity_level= profile_maturity.name + ": " + profile_maturity.description
+            controls= (profile_maturity_control.objects.filter(profile_id=pk)).values()
+            controlli=[]
+            implementation=[]
+
+            for control in controls:
+                if subcategory.id == control['subcategory_id']:
+                    controllo=Control.objects.get(id=control['control_id'])
+                    controlli.append(controllo.name + ": " + controllo.description)
+                    implementation.append(control['implementation'])
+
+            controlsjoined = ";".join(controlli)
+            controlimplementation = ";".join(implementation)
+            row_list.append({'Function': category.function, 'Category': category, 'subcategory': subcategory, 'priority_level': priority_level, 'maturity_level': maturity_level, 'controls':controlsjoined, 'implementation': controlimplementation })
+
+
+        print(row_list)
+
+        for row in row_list:
+            row_num +=1
+
+            # define data for each cell in the row
+            row = [
+                row['Function'],
+                row['Category'].name,
+                row['subcategory'].name +": " + row['subcategory'].description,
+                row['priority_level'],
+                row['maturity_level'],
+                row['controls'],
+                row['implementation']
+
+            ]
+
+            #assign data for each cell of the row
+            for col_num, cell_value in enumerate(row, 1):
+                cell = worksheet.cell(row=row_num, column=col_num)
+                cell.value = cell_value
+                cell.font = Font(name="Times New Roman", size=11, bold=False, color='FF000000')
+                cell.border = Border(left=Side(border_style="thin", color='FF000000'),
+                                     right=Side(border_style="thin", color='FF000000'),
+                                     top=Side(border_style="thin", color='FF000000'),
+                                     bottom=Side(border_style="thin", color='FF000000'), )
+        dims = {}
+        for row in worksheet.rows:
+            for cell in row:
+
+                if cell.value:
+                    dims[cell.column_letter] = max((dims.get(cell.column_letter, 0), len(str(cell.value))))
+        for col, value in dims.items():
+            worksheet.column_dimensions[col].width = value
+
+        workbook.save(response)
+
+    return response
 
 
 

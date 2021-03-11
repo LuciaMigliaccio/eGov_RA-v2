@@ -36,6 +36,7 @@
                 <th>Evaluate</th>
                 <th>Implemented controls</th>
                 <th>Missing controls</th>
+                <th>Export</th>
                 <th>Delete profile</th>
             </tr>
         </thead>
@@ -74,6 +75,12 @@
                             none
                         {% endif %}
 
+                    </td>
+                    <td>
+                        <form method="POST" action="{% url 'export_profile' profile.pk %}">
+                           {% csrf_token %}
+                            <button type="submit" class="btn btn-primary btn-sm">Export</button>
+                        </form>
                     </td>
                     <td>
                         <form method="POST" action="{% url 'delete_profile' profile.pk %}">
