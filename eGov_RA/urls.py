@@ -23,7 +23,7 @@ from parsingbpmn.views import bpmn_process_management, system_management, \
     task_type_enrichment, export_threat_modeling, threats_and_controls, bpmn_viewer, edit_process, context_management, \
     profile_management, fusion_perform, fusion_profile_perform, controls_missing, profile_roadmap, delete_profile, \
     delete_context, create_context, save_contextualization, create_profile, save_profile, profile_controls, save_profile_controls, \
-    down_context_sample, read_context_file, generate_profile
+    down_context_sample, read_context_file, generate_profile,profile_evaluation, profile_missing
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -57,7 +57,8 @@ urlpatterns = [
     path('down_context_sample', down_context_sample, name='down_context_sample'),
     path('read_context_file', read_context_file, name='read_context_file'),
     path('generate_profile/<int:pk>', generate_profile, name='generate_profile'),
-
+    path('profile_evaluation/<int:pk>', profile_evaluation, name='profile_evaluation'),
+    path('profile_missing/<int:pk>', profile_missing, name='profile_missing'),
 
 ]
 

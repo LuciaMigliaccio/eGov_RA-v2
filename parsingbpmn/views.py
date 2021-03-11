@@ -13,7 +13,8 @@ from .models import Process, Asset, System, Asset_has_attribute, Attribute, Asse
     contextualization_has_maturity_levels, Maturity_level, Fusioncontext_has_context, Family, control_framework, \
     Threat_has_family
 from .bpmn_python_master.bpmn_python import bpmn_diagram_rep as diagram
-from utils.fusion_functions import checkPriority, comparingmaturity, convertFromDatabase, convertToDatabase, createdict, profileupgrade
+from utils.fusion_functions import checkPriority, comparingmaturity, convertFromDatabase, convertToDatabase, createdict, profileupgrade,\
+    comparingcontrols
 
 
 
@@ -1066,12 +1067,15 @@ def fusion_profile_perform(request):
 def controls_missing(request):
     missingcontrols =request.session['list']
     profilepk = request.session.get('pk')
-    print(profilepk)
-    #riparti da qua e prenditi le implementation dal profilo (profile,control maturity)
+    implementation=request.session.get('implementation')
     subcategory_clear_list = []
     controls_clear_list= []
     framework_clear_list=[]
-    implementation_clear_list=[]
+
+    if implementation=="none":
+        implementation_list = implementation
+    else:
+        implementation_list = (profile_maturity_control.objects.filter(profile_id=profilepk)).values()
 
     for control in missingcontrols:
         element = control['subcategory_id']
@@ -1085,7 +1089,7 @@ def controls_missing(request):
         controls_clear_list.append(control['control_id'])
         framework_clear_list.append(framework_list)
 
-    return render(request, 'controls_missing.html', {'framework_clear_list': framework_clear_list, 'missingcontrols': missingcontrols, 'subcategory_clear_list': subcategory_clear_list, 'controls_clear_list': controls_clear_list})
+    return render(request, 'controls_missing.html', {'implementation_list': implementation_list,'framework_clear_list': framework_clear_list, 'missingcontrols': missingcontrols, 'subcategory_clear_list': subcategory_clear_list, 'controls_clear_list': controls_clear_list})
 
 def profile_roadmap(request, pk):
     if request.method == 'POST':
@@ -1094,11 +1098,93 @@ def profile_roadmap(request, pk):
         dict_target = {}
         controls_target = createdict(profilotarget, dict_target)
         missingcontrols = controls_target
+        implementation = "other"
         request.session['pk'] = pk
         request.session['list'] = missingcontrols
+        request.session['implementation'] = implementation
         return redirect('controls_missing')
     else:
         return redirect('profile_management')
+
+
+def profile_evaluation(request,pk):
+    if request.method == 'POST':
+        profile_controls=(profile_maturity_control.objects.filter(profile=Profile.objects.get(pk=pk))).values()
+        prof=Profile.objects.get(pk=pk)
+        print(prof)
+        context=prof.context_id
+        profiles= (Profile.objects.filter(context_id=context)).values()
+        min_profile = []
+        std_profile = []
+        avz_profile = []
+        missing_controls=[]
+        actual_profile=[]
+        newdict={}
+
+        for profile in profiles:
+            if "target" in profile['name']:
+                if "minimo" in profile['name']:
+                    newmindict={}
+                    min_temp = (profile_maturity_control.objects.filter(profile_id=profile['id'])).values()
+                    min_profile = createdict(min_temp,newmindict)
+                if "standard" in profile['name']:
+                    newstddict={}
+                    std_temp= (profile_maturity_control.objects.filter(profile_id=profile['id'])).values()
+                    std_profile=createdict(std_temp, newstddict)
+                if "avanzato" in profile['name']:
+                    newavzdict={}
+                    avz_temp=(profile_maturity_control.objects.filter(profile_id=profile['id'])).values()
+                    avz_profile = createdict(avz_temp, newavzdict)
+
+        actual_profile = createdict(profile_controls, newdict)
+        print(actual_profile)
+
+        for i,subcategory in enumerate(min_profile,start=0):
+            temp=[]
+            newelement=comparingcontrols(actual_profile[i]['control_id'],subcategory['control_id'],temp)
+            missing_controls.append({'subcategory_id': subcategory['subcategory_id'], 'control_id': newelement})
+
+        if not missing_controls:
+            prof.level="minimo"
+            for i, subcategory in enumerate(std_profile, start=0):
+                temp = []
+                newelement = comparingcontrols(actual_profile[i]['control_id'],subcategory['control_id'], temp)
+                missing_controls.append({'subcategory_id': subcategory['subcategory_id'], 'control_id': newelement})
+        else:
+            prof.level="insufficiente"
+
+        if not missing_controls:
+            prof.level="standard"
+            for i, subcategory in enumerate(avz_profile, start=0):
+                temp = []
+                newelement = comparingcontrols(actual_profile[i]['control_id'],subcategory['control_id'], temp)
+                missing_controls.append({'subcategory_id': subcategory['subcategory_id'], 'control_id': newelement})
+        elif(prof.level == "null"):
+            prof.level="minimo"
+
+        if not missing_controls:
+            prof.level="avanzato"
+
+        prof.save()
+
+    request.session['missing_controls'] = missing_controls
+    return redirect('profile_management', context)
+
+def profile_missing(request,pk):
+    missing_controls = request.session.get('missing_controls')
+    if request.method=='POST':
+        profile=Profile.objects.get(pk=pk)
+        context=profile.context_id
+        missingcontrols=missing_controls
+        request.session['list'] = missingcontrols
+        implementation= "none"
+        request.session['implementation'] = implementation
+        return redirect('controls_missing')
+    else:
+        return redirect('profile_management')
+
+
+
 
 def delete_context(request,pk):
     if request.method == 'POST':

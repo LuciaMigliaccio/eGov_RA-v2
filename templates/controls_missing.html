@@ -24,14 +24,25 @@
                             <td>{{ subcategory}}: {{ subcategory.description}} </td>
                             <td>
                             <ul>
+                            <ol>
                                 {% for control in controls_clear_list|index:forloop.counter0 %}
+
                                     <li> <b>{{ framework_clear_list|index:forloop.parentloop.counter0|index:forloop.counter0 }}:</b> {{ control}}- {{ control.description}} </li>
+
                                 {% endfor %}
+                            </ol>
                             </ul>
                             </td>
-                            <td> {% for element in missingcontrols %}
+                            <td>
+                                <ol>
+                                {% for element in implementation_list %}
+                                    {% if element.subcategory_id == subcategory.id %}
+
                                         <li> {{ element.implementation }}</li>
+
+                                    {% endif %}
                                     {% endfor %}
+                                </ol>
                                 </td>
                             </tr>
                     {% endfor %}
