@@ -834,12 +834,14 @@ def save_profile_controls(request,pk):
         for i,control in enumerate(controls_list,start=0):
             controls_and_implementation.append({'control': control, 'implementation':clean_text[i]})
 
+        print(subcategory_and_controls)
         print(controls_and_implementation)
 
         for subcategory in subcategory_and_controls:
-            for control in controls_and_implementation:
-                for element in subcategory['related_controls']:
+            for element in subcategory['related_controls']:
+                for control in controls_and_implementation:
                     if control['control'] == element['id']:
+                        print(control['control'])
                         profilecontro=profile_maturity_control(profile_id=pk, control_id=control['control'], subcategory_id=subcategory['subcategory']['id'], implementation=control['implementation'])
                         profilecontro.save()
 
@@ -1064,7 +1066,7 @@ def profile_evaluation(request,pk):
     if request.method == 'POST':
         profile_controls=(profile_maturity_control.objects.filter(profile=Profile.objects.get(pk=pk))).values()
         prof=Profile.objects.get(pk=pk)
-        print(prof)
+        profile_framework=prof.framework_id
         context=prof.context_id
         profiles= (Profile.objects.filter(context_id=context)).values()
         min_profile = []
@@ -1076,42 +1078,53 @@ def profile_evaluation(request,pk):
 
         for profile in profiles:
             if "target" in profile['name']:
-                if "minimo" in profile['name']:
-                    newmindict={}
-                    min_temp = (profile_maturity_control.objects.filter(profile_id=profile['id'])).values()
-                    min_profile = createdict(min_temp,newmindict)
-                if "standard" in profile['name']:
-                    newstddict={}
-                    std_temp= (profile_maturity_control.objects.filter(profile_id=profile['id'])).values()
-                    std_profile=createdict(std_temp, newstddict)
-                if "avanzato" in profile['name']:
-                    newavzdict={}
-                    avz_temp=(profile_maturity_control.objects.filter(profile_id=profile['id'])).values()
-                    avz_profile = createdict(avz_temp, newavzdict)
+                if profile['framework_id'] == profile_framework:
+                    if "minimo" in profile['name']:
+                        newmindict={}
+                        min_temp = (profile_maturity_control.objects.filter(profile_id=profile['id'])).values()
+                        min_profile = createdict(min_temp,newmindict)
+                    if "standard" in profile['name']:
+                        newstddict={}
+                        std_temp= (profile_maturity_control.objects.filter(profile_id=profile['id'])).values()
+                        std_profile=createdict(std_temp, newstddict)
+                    if "avanzato" in profile['name']:
+                        newavzdict={}
+                        avz_temp=(profile_maturity_control.objects.filter(profile_id=profile['id'])).values()
+                        avz_profile = createdict(avz_temp, newavzdict)
 
         actual_profile = createdict(profile_controls, newdict)
         print(actual_profile)
+        print(min_profile)
+        print(std_profile)
+        print(avz_profile)
 
-        for i,subcategory in enumerate(min_profile,start=0):
-            temp=[]
-            newelement=comparingcontrols(actual_profile[i]['control_id'],subcategory['control_id'],temp)
-            missing_controls.append({'subcategory_id': subcategory['subcategory_id'], 'control_id': newelement})
+
+        for subcat in actual_profile:
+            for subcategory in min_profile:
+                if subcategory['subcategory_id'] == subcat['subcategory_id']:
+                    temp = []
+                    newelement = comparingcontrols(subcat['control_id'],subcategory['control_id'], temp)
+                    missing_controls.append({'subcategory_id': subcategory['subcategory_id'], 'control_id': newelement})
 
         if not missing_controls:
             prof.level="minimo"
-            for i, subcategory in enumerate(std_profile, start=0):
-                temp = []
-                newelement = comparingcontrols(actual_profile[i]['control_id'],subcategory['control_id'], temp)
-                missing_controls.append({'subcategory_id': subcategory['subcategory_id'], 'control_id': newelement})
+            for subcat in actual_profile:
+                for subcategory in std_profile:
+                    if subcategory['subcategory_id'] == subcat['subcategory_id']:
+                        temp = []
+                        newelement = comparingcontrols(subcat['control_id'], subcategory['control_id'], temp)
+                        missing_controls.append({'subcategory_id': subcategory['subcategory_id'], 'control_id': newelement})
         else:
             prof.level="insufficiente"
 
         if not missing_controls:
             prof.level="standard"
-            for i, subcategory in enumerate(avz_profile, start=0):
-                temp = []
-                newelement = comparingcontrols(actual_profile[i]['control_id'],subcategory['control_id'], temp)
-                missing_controls.append({'subcategory_id': subcategory['subcategory_id'], 'control_id': newelement})
+            for subcat in actual_profile:
+                for subcategory in avz_profile:
+                    if subcategory['subcategory_id'] == subcat['subcategory_id']:
+                        temp = []
+                        newelement = comparingcontrols(subcat['control_id'], subcategory['control_id'], temp)
+                        missing_controls.append({'subcategory_id': subcategory['subcategory_id'], 'control_id': newelement})
         elif(prof.level == "null"):
             prof.level="minimo"
 

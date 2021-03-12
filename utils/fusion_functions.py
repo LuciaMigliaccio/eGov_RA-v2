@@ -140,6 +140,9 @@ def comparingcontrols(v1,v2,newelement):
     i = 0
     j = 0
 
+    #[21,22,23,24]
+    #[21,27,29]
+
     while (i < len(v1) and j < len(v2)):
         if (v1[i] != v2[j]):
             newelement.append(v2[j])
@@ -147,9 +150,6 @@ def comparingcontrols(v1,v2,newelement):
         i=i+1
         j=j+1
 
-    while (i < len(v1)):
-        newelement.append(v1[i])
-        i = i + 1
 
     while (j < len(v2)):
         newelement.append(v2[j])
