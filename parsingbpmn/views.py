@@ -1012,6 +1012,7 @@ def fusion_profile_perform(request):
             temp = profileupgrade(controls_attuale, controls_ufficiale)
             missingcontrols= profileupgrade(temp, controls_target)
             request.session['list']=missingcontrols
+            request.session['implementation']="none"
             return redirect('controls_missing')
     else:
         fusionform = FusionForm(request.POST)
@@ -1093,11 +1094,6 @@ def profile_evaluation(request,pk):
                         avz_profile = createdict(avz_temp, newavzdict)
 
         actual_profile = createdict(profile_controls, newdict)
-        print(actual_profile)
-        print(min_profile)
-        print(std_profile)
-        print(avz_profile)
-
 
         for subcat in actual_profile:
             for subcategory in min_profile:
