@@ -9,7 +9,12 @@
     </p>
     <form method="POST" name = "formname" action="{% url 'save_profile' context %}">
         {% csrf_token %}
-        {{ form.as_p }}
+        {{ form.name.errors}}
+        {{ form.name.label_tag}}
+        {{ form.name}}<br>
+        {{ form.framework.errors}}
+        {{ form.framework.label_tag}}
+        {{ form.framework}}
     <table class="table">
         <thead>
             <tr>

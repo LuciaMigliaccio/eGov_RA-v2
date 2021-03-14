@@ -51,4 +51,9 @@
         </tbody>
     </table>
 
+      <form method="POST" action="{% url 'export_roadmap' profilepk %}">
+            {% csrf_token %}
+            <button id="back" type="submit" class="btn btn-primary">Export as a CSV file</button>
+      </form>
+
 {% endblock %}

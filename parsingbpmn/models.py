@@ -216,7 +216,7 @@ class Contextualization(models.Model):
 
 class Profile(models.Model):
     name = models.CharField(max_length=100)
-    level = models.CharField(max_length=100, null=True)
+    level = models.CharField(max_length=100, null=True, blank=True)
     context = models.ForeignKey(Context, on_delete=models.CASCADE)
     framework=models.ForeignKey(control_framework, on_delete=models.CASCADE, null=True)
 

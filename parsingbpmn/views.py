@@ -811,7 +811,6 @@ def profile_controls(request,pk):
 
         subcategory_and_controls.append({'subcategory': subcategory, 'related_controls': temp})
 
-    print(subcategory_and_controls)
     request.session['subcategory_and_controls'] = subcategory_and_controls
     return render(request, 'profile_controls.html', {'subcategory_and_controls': subcategory_and_controls, 'ids_controls':ids_controls, 'profile': profile})
 
@@ -834,8 +833,6 @@ def save_profile_controls(request,pk):
         for i,control in enumerate(controls_list,start=0):
             controls_and_implementation.append({'control': control, 'implementation':clean_text[i]})
 
-        print(subcategory_and_controls)
-        print(controls_and_implementation)
 
         for subcategory in subcategory_and_controls:
             for element in subcategory['related_controls']:
@@ -1046,7 +1043,9 @@ def controls_missing(request):
         controls_clear_list.append(control['control_id'])
         framework_clear_list.append(framework_list)
 
-    return render(request, 'controls_missing.html', {'implementation_list': implementation_list,'framework_clear_list': framework_clear_list, 'missingcontrols': missingcontrols, 'subcategory_clear_list': subcategory_clear_list, 'controls_clear_list': controls_clear_list})
+    if request.method=='POST':
+        request.session['list']= missingcontrols
+    return render(request, 'controls_missing.html', {'profilepk': profilepk, 'implementation_list': implementation_list,'framework_clear_list': framework_clear_list, 'missingcontrols': missingcontrols, 'subcategory_clear_list': subcategory_clear_list, 'controls_clear_list': controls_clear_list})
 
 def profile_roadmap(request, pk):
     if request.method == 'POST':
@@ -1066,9 +1065,9 @@ def profile_roadmap(request, pk):
 def profile_evaluation(request,pk):
     if request.method == 'POST':
         profile_controls=(profile_maturity_control.objects.filter(profile=Profile.objects.get(pk=pk))).values()
-        prof=Profile.objects.get(pk=pk)
-        profile_framework=prof.framework_id
-        context=prof.context_id
+        current_profile=Profile.objects.get(pk=pk)
+        profile_framework=current_profile.framework_id
+        context=current_profile.context_id
         profiles= (Profile.objects.filter(context_id=context)).values()
         min_profile = []
         std_profile = []
@@ -1103,7 +1102,7 @@ def profile_evaluation(request,pk):
                     missing_controls.append({'subcategory_id': subcategory['subcategory_id'], 'control_id': newelement})
 
         if not missing_controls:
-            prof.level="minimo"
+            current_profile.level="minimo"
             for subcat in actual_profile:
                 for subcategory in std_profile:
                     if subcategory['subcategory_id'] == subcat['subcategory_id']:
@@ -1111,23 +1110,23 @@ def profile_evaluation(request,pk):
                         newelement = comparingcontrols(subcat['control_id'], subcategory['control_id'], temp)
                         missing_controls.append({'subcategory_id': subcategory['subcategory_id'], 'control_id': newelement})
         else:
-            prof.level="insufficiente"
+            current_profile.level="insufficiente"
 
         if not missing_controls:
-            prof.level="standard"
+            current_profile.level="standard"
             for subcat in actual_profile:
                 for subcategory in avz_profile:
                     if subcategory['subcategory_id'] == subcat['subcategory_id']:
                         temp = []
                         newelement = comparingcontrols(subcat['control_id'], subcategory['control_id'], temp)
                         missing_controls.append({'subcategory_id': subcategory['subcategory_id'], 'control_id': newelement})
-        elif(prof.level == "null"):
-            prof.level="minimo"
+        elif(current_profile.level == "None"):
+            current_profile.level="minimo"
 
         if not missing_controls:
-            prof.level="avanzato"
+            current_profile.level="avanzato"
 
-        prof.save()
+        current_profile.save()
 
     request.session['missing_controls'] = missing_controls
     return redirect('profile_management', context)
@@ -1144,9 +1143,6 @@ def profile_missing(request,pk):
         return redirect('controls_missing')
     else:
         return redirect('profile_management')
-
-
-
 
 def delete_context(request,pk):
     if request.method == 'POST':
@@ -1350,8 +1346,6 @@ def export_profile(request, pk):
             row_list.append({'Function': category.function, 'Category': category, 'subcategory': subcategory, 'priority_level': priority_level, 'maturity_level': maturity_level, 'controls':controlsjoined, 'implementation': controlimplementation })
 
 
-        print(row_list)
-
         for row in row_list:
             row_num +=1
 
@@ -1390,4 +1384,73 @@ def export_profile(request, pk):
     return response
 
 
+def export_roadmap(request, pk):
+    missingcontrols = request.session['list']
+    if request.method == 'POST':
+
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename={date}-{name}-roadmap.xlsx'.format(
+            date=datetime.now().strftime('%d-%m-%Y'),
+            name=Profile.objects.get(pk=pk).name.replace(" ", "_")
+        )
+        workbook = Workbook()
+
+        worksheet = workbook.active
+        worksheet.title = 'Profile'
+        columns = ['Subcategory', 'Controls']
+        row_num = 1
+
+        # Assign the titles for each cell of the header
+        for col_num, column_title in enumerate(columns, 1):
+            cell = worksheet.cell(row=row_num, column=col_num)
+            cell.value = column_title
+            cell.font = Font(name="Times New Roman", size=12, bold=True, color='FF0000')
+            cell.border = Border(left=Side(border_style="thin", color='FF000000'),
+                                 right=Side(border_style="thin", color='FF000000'),
+                                 top=Side(border_style="thin", color='FF000000'),
+                                 bottom=Side(border_style="thin", color='FF000000'), )
+
+        row_list = []
+
+        for element in missingcontrols:
+            subcategory = (Subcategory.objects.get(id=element['subcategory_id']))
+            controlli=[]
+
+            for control in element['control_id']:
+                controllo = Control.objects.get(id=control)
+                controlli.append(controllo.name + ": " + controllo.description)
+            controlsjoined = ";".join(controlli)
+
+            row_list.append({'subcategory': subcategory, 'controls': controlsjoined})
+
+            for row in row_list:
+                row_num += 1
+
+                # define data for each cell in the row
+                row = [
+                    row['subcategory'].name + ": " + row['subcategory'].description,
+                    row['controls']
+                ]
+
+                # assign data for each cell of the row
+                for col_num, cell_value in enumerate(row, 1):
+                    cell = worksheet.cell(row=row_num, column=col_num)
+                    cell.value = cell_value
+                    cell.font = Font(name="Times New Roman", size=11, bold=False, color='FF000000')
+                    cell.border = Border(left=Side(border_style="thin", color='FF000000'),
+                                         right=Side(border_style="thin", color='FF000000'),
+                                         top=Side(border_style="thin", color='FF000000'),
+                                         bottom=Side(border_style="thin", color='FF000000'), )
+            dims = {}
+            for row in worksheet.rows:
+                for cell in row:
+                    if cell.value:
+                        dims[cell.column_letter] = max((dims.get(cell.column_letter, 0), len(str(cell.value))))
+            for col, value in dims.items():
+                worksheet.column_dimensions[col].width = value
+
+        workbook.save(response)
+    return response
 
