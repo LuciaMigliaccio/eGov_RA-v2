@@ -31,9 +31,37 @@
                                     <td>
                                         <input type="checkbox" id="checbox" name="controls" value={{ control.id}}/>
                                     </td>
-                                    <td>{{ control.name}}: {{ control.description}} </td>
                                     <td>
-                                         <input type="text" name="controls_implementation">
+                                        <a href="" style="color: black" data-toggle="modal"
+                                           data-target="#ControlInfo{{ control.pk }}">
+                                            {{ control.name }}
+                                        </a>
+                                        <div class="modal" tabindex="-1" id="ControlInfo{{ control.pk }}">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h1 class="modal-title">{{ control.name }}</h1>
+                                                        <button type="button" class="close" data-dismiss="modal"
+                                                                aria-label="Close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>{{ control.description }}</p>
+
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary"
+                                                                data-dismiss="modal">
+                                                            Close
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                         <input type="text" name="controls_implementation" class="resizedTextbox">
                                     </td>
 
                                 </tr>

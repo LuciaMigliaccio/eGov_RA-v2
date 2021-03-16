@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Process, System, Context, Profile, Maturity_level
+from .models import Process, System, Context, Profile
 
 
 class SystemForm(forms.ModelForm):

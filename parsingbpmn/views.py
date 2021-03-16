@@ -16,8 +16,6 @@ from .bpmn_python_master.bpmn_python import bpmn_diagram_rep as diagram
 from utils.fusion_functions import checkPriority, comparingmaturity, convertFromDatabase, convertToDatabase, createdict, profileupgrade,\
     comparingcontrols
 
-
-
 # Create your views here.
 
 def system_management(request):
@@ -659,7 +657,7 @@ def bpmn_viewer(request,pk):
 
 def context_management(request):
     if request.method == 'POST':
-        selectform = SelectContextForm(request.POST)
+        selectcontextform = SelectContextForm(request.POST)
         form = ContextualizationForm(request.POST)
         if form.is_valid():
             form.save()
@@ -667,10 +665,10 @@ def context_management(request):
             return redirect('profile_management', last_context.pk)
     else:
         form = ContextualizationForm()
-        selectform = SelectContextForm(request.POST)
+        selectcontextform = SelectContextForm(request.POST)
     context = Context.objects.all()
     return render(request,'context_management.html',{
-        'form':form,'selectform':selectform, 'contexts':context
+        'form':form,'selectcontextform':selectcontextform, 'contexts':context
     })
 
 def create_context(request):
@@ -740,6 +738,7 @@ def create_profile(request,pk):
     maturity_levels=[]
     maturity_dict=[]
     form= ProfileForm(request.POST)
+
     for value in values_in_context:
         temp=Subcategory.objects.filter(id=value['subcategory_id'])
         subcategory_dict.append((list(temp.values()))[0])
@@ -764,7 +763,6 @@ def save_profile(request,pk):
             saved_form.context_id = pk
             saved_form.save()
             last_profile= Profile.objects.latest('id')
-
 
         priority= request.POST.getlist('priority')
         matlev=request.POST.getlist('maturity_level')
@@ -833,7 +831,6 @@ def save_profile_controls(request,pk):
         for i,control in enumerate(controls_list,start=0):
             controls_and_implementation.append({'control': control, 'implementation':clean_text[i]})
 
-
         for subcategory in subcategory_and_controls:
             for element in subcategory['related_controls']:
                 for control in controls_and_implementation:
@@ -841,7 +838,6 @@ def save_profile_controls(request,pk):
                         print(control['control'])
                         profilecontro=profile_maturity_control(profile_id=pk, control_id=control['control'], subcategory_id=subcategory['subcategory']['id'], implementation=control['implementation'])
                         profilecontro.save()
-
 
     profile = Profile.objects.get(pk=pk)
     context= profile.context_id
@@ -932,10 +928,10 @@ def fusion_perform(request):
         return redirect('profile_management', last_context.pk)
 
     else:
-        selectform = SelectContextForm(request.POST)
+        selectcontextform = SelectContextForm(request.POST)
         form = ContextualizationForm(request.POST)
     context = Context.objects.all()
-    return render(request, 'context_management.html', {'context': context, 'selectform ': selectform , 'form': form })
+    return render(request, 'context_management.html', {'context': context, 'selectcontextform ': selectcontextform , 'form': form })
 
 def generate_profile(request, pk):
     if request.method == 'POST':
@@ -977,9 +973,10 @@ def generate_profile(request, pk):
                         profilecontrols.save()
 
     profileform=ProfileForm(request.POST)
+    fusionform= FusionForm(request.POST)
     profiles = Profile.objects.filter(context_id=pk)
     context = last_profile.context_id
-    return render(request, 'profile_management.html', {'context':context ,'profiles': profiles, 'profileform':profileform})
+    return render(request, 'profile_management.html', {'context':context ,'profiles': profiles, 'profileform':profileform, 'fusionform': fusionform})
 
 def fusion_profile_perform(request):
     if request.method == 'POST':
@@ -1235,9 +1232,7 @@ def export_context(request, pk):
                                  top=Side(border_style="thin", color='FF000000'),
                                  bottom=Side(border_style="thin", color='FF000000'), )
 
-
         # Iterate through all contextualization
-
         row_list = []
 
         for element in contextualization_queryset.values():
@@ -1253,9 +1248,6 @@ def export_context(request, pk):
                 level.append(temp.name + ": " + temp.description)
             maturity_level= ';'.join(level)
             row_list.append({'Function': category.function, 'Category': category, 'subcategory': subcategory, 'priority_level': priority_level, 'maturity_level': maturity_level})
-
-
-        print(row_list)
 
         for row in row_list:
             row_num +=1
@@ -1319,7 +1311,6 @@ def export_profile(request, pk):
                                  right=Side(border_style="thin", color='FF000000'),
                                  top=Side(border_style="thin", color='FF000000'),
                                  bottom=Side(border_style="thin", color='FF000000'), )
-
 
         # Iterate
         row_list = []
