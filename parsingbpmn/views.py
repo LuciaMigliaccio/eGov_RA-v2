@@ -835,7 +835,6 @@ def save_profile_controls(request,pk):
             for element in subcategory['related_controls']:
                 for control in controls_and_implementation:
                     if control['control'] == element['id']:
-                        print(control['control'])
                         profilecontro=profile_maturity_control(profile_id=pk, control_id=control['control'], subcategory_id=subcategory['subcategory']['id'], implementation=control['implementation'])
                         profilecontro.save()
 
@@ -1096,7 +1095,8 @@ def profile_evaluation(request,pk):
                 if subcategory['subcategory_id'] == subcat['subcategory_id']:
                     temp = []
                     newelement = comparingcontrols(subcat['control_id'],subcategory['control_id'], temp)
-                    missing_controls.append({'subcategory_id': subcategory['subcategory_id'], 'control_id': newelement})
+                    if newelement != []:
+                        missing_controls.append({'subcategory_id': subcategory['subcategory_id'], 'control_id': newelement})
 
         if not missing_controls:
             current_profile.level="minimo"
@@ -1105,9 +1105,11 @@ def profile_evaluation(request,pk):
                     if subcategory['subcategory_id'] == subcat['subcategory_id']:
                         temp = []
                         newelement = comparingcontrols(subcat['control_id'], subcategory['control_id'], temp)
-                        missing_controls.append({'subcategory_id': subcategory['subcategory_id'], 'control_id': newelement})
+                        if newelement != []:
+                            missing_controls.append({'subcategory_id': subcategory['subcategory_id'], 'control_id': newelement})
         else:
             current_profile.level="insufficiente"
+
 
         if not missing_controls:
             current_profile.level="standard"
@@ -1116,8 +1118,9 @@ def profile_evaluation(request,pk):
                     if subcategory['subcategory_id'] == subcat['subcategory_id']:
                         temp = []
                         newelement = comparingcontrols(subcat['control_id'], subcategory['control_id'], temp)
-                        missing_controls.append({'subcategory_id': subcategory['subcategory_id'], 'control_id': newelement})
-        elif(current_profile.level == "None"):
+                        if newelement != []:
+                            missing_controls.append({'subcategory_id': subcategory['subcategory_id'], 'control_id': newelement})
+        elif(str(current_profile.level) == "None"):
             current_profile.level="minimo"
 
         if not missing_controls:
@@ -1129,11 +1132,13 @@ def profile_evaluation(request,pk):
     return redirect('profile_management', context)
 
 def profile_missing(request,pk):
-    missing_controls = request.session.get('missing_controls')
     if request.method=='POST':
         profile=Profile.objects.get(pk=pk)
         context=profile.context_id
-        missingcontrols=missing_controls
+        missing_controls = request.session.get('missing_controls')
+        missingcontrols = missing_controls
+        if(str(profile.level)== "None"):
+            missingcontrols = []
         request.session['list'] = missingcontrols
         implementation= "none"
         request.session['implementation'] = implementation
