@@ -9,7 +9,7 @@ from openpyxl import xml
 
 import parsingbpmn.bpmn_python_master.bpmn_python.bpmn_import_utils as utils
 import parsingbpmn.bpmn_python_master.bpmn_python.bpmn_python_consts as consts
-import parsingbpmn.bpmn_python_master.bpmn_python.bpmn_diagram_rep as rep
+
 
 
 class BpmnDiagramGraphImport(object):
