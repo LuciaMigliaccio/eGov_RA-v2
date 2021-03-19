@@ -735,12 +735,13 @@ def create_profile(request,pk):
     context= pk
     values_in_context=(Contextualization.objects.filter(context=context)).values()
     subcategory_dict=[]
-    maturity_levels=[]
     maturity_dict=[]
+    priority_of_subcat=[]
     form= ProfileForm(request.POST)
 
     for value in values_in_context:
         temp=Subcategory.objects.filter(id=value['subcategory_id'])
+        priority_of_subcat.append(value['priority'])
         subcategory_dict.append((list(temp.values()))[0])
         maturity_levels=list((contextualization_has_maturity_levels.objects.filter(subcategory_contextualization_id=value['id']).values()))
         maturitytemp=[]
@@ -752,7 +753,7 @@ def create_profile(request,pk):
 
     priority_list=["Bassa", "Media", "Alta"]
     request.session['list'] = subcategory_dict
-    return render(request, 'create_profile.html', {'form':form, 'subcategory_dict': subcategory_dict, 'priority_list': priority_list, 'maturity_dict':maturity_dict,'context':context })
+    return render(request, 'create_profile.html', {'form':form, 'subcategory_dict': subcategory_dict, 'priority_list': priority_list,'priority_of_subcat': priority_of_subcat , 'maturity_dict':maturity_dict,'context':context })
 
 def save_profile(request,pk):
     subcategory_dict=request.session['list']
