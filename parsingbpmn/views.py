@@ -4,7 +4,7 @@ import re, openpyxl
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from openpyxl import Workbook
-from openpyxl.styles import Font, Border, Side
+from openpyxl.styles import Font, Border, Side, Alignment
 
 from .forms import ProcessForm, SystemForm, ContextualizationForm, ProfileForm, FusionForm, SelectContextForm
 from .models import Process, Asset, System, Asset_has_attribute, Attribute, Asset_type, Attribute_value, \
@@ -1277,14 +1277,15 @@ def export_context(request, pk):
                                      right=Side(border_style="thin", color='FF000000'),
                                      top=Side(border_style="thin", color='FF000000'),
                                      bottom=Side(border_style="thin", color='FF000000'), )
-        dims = {}
+
         for row in worksheet.rows:
             for cell in row:
-
-                if cell.value:
-                    dims[cell.column_letter] = max((dims.get(cell.column_letter, 0), len(str(cell.value))))
-        for col, value in dims.items():
-            worksheet.column_dimensions[col].width = value
+                cell.alignment = Alignment(wrapText=True)
+                value= cell.column_letter
+                if(value != 'A' and value != 'D'):
+                    worksheet.column_dimensions[value].width = 50
+                else:
+                    worksheet.column_dimensions[value].width = 20
 
         workbook.save(response)
 
@@ -1339,7 +1340,10 @@ def export_profile(request, pk):
                     implementation.append(control['implementation'])
 
             controlsjoined = ";".join(controlli)
-            controlimplementation = ";".join(implementation)
+            if("target" in Profile.objects.get(pk=pk).name):
+                controlimplementation="none"
+            else:
+                controlimplementation = ";".join(implementation)
             row_list.append({'Function': category.function, 'Category': category, 'subcategory': subcategory, 'priority_level': priority_level, 'maturity_level': maturity_level, 'controls':controlsjoined, 'implementation': controlimplementation })
 
 
@@ -1367,14 +1371,14 @@ def export_profile(request, pk):
                                      right=Side(border_style="thin", color='FF000000'),
                                      top=Side(border_style="thin", color='FF000000'),
                                      bottom=Side(border_style="thin", color='FF000000'), )
-        dims = {}
         for row in worksheet.rows:
             for cell in row:
-
-                if cell.value:
-                    dims[cell.column_letter] = max((dims.get(cell.column_letter, 0), len(str(cell.value))))
-        for col, value in dims.items():
-            worksheet.column_dimensions[col].width = value
+                cell.alignment = Alignment(wrapText=True)
+                value = cell.column_letter
+                if (value != 'A' and value != 'D'):
+                    worksheet.column_dimensions[value].width = 50
+                else:
+                    worksheet.column_dimensions[value].width = 20
 
         workbook.save(response)
 
@@ -1440,13 +1444,13 @@ def export_roadmap(request, pk):
                                          right=Side(border_style="thin", color='FF000000'),
                                          top=Side(border_style="thin", color='FF000000'),
                                          bottom=Side(border_style="thin", color='FF000000'), )
-            dims = {}
-            for row in worksheet.rows:
-                for cell in row:
-                    if cell.value:
-                        dims[cell.column_letter] = max((dims.get(cell.column_letter, 0), len(str(cell.value))))
-            for col, value in dims.items():
-                worksheet.column_dimensions[col].width = value
+
+        for row in worksheet.rows:
+            for cell in row:
+                cell.alignment = Alignment(wrapText=True)
+                value = cell.column_letter
+                worksheet.column_dimensions[value].width = 50
+
 
         workbook.save(response)
     return response
